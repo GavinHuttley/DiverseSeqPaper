@@ -77,8 +77,11 @@ Add a figure describing the core algorithm as a flow chart.
 
 The `dvgt prep` sub-command converts plain text sequence data into an on disk storage format that is more efficient for interrogation in the other steps. A user can provide either fasta or GenBank formatted DNA sequence files. The sequences are converted into unsigned 8-bit integer numpy arrays and stored in a single HDF5 file on disk. The resulting `.dvgtseqs` file is required for both the `max` and `nmost` commands.
 
-
- A directory of these files is converted into a single HDF5 file on disk in which .
+We implement the following performance optimizations:
+- Sequence data is converted into HDF5 storage on disk. 
+- K-mer counts are only computed when a sequence record is being considered for inclusion in the divergent set. This has the effect of reducing the amount of memory required to the desired divergent set size plus one but has no impact on compute time.
+- We use `numba` for just-in-time compilation of core algorithms for producing k-mers and their counts.
+- 
 
 **Algorithm 1** The divergent `max` algorithm.\label{algorithm:max}
 
@@ -123,7 +126,6 @@ counterparts to the above
 
 For homologous DNA sequences, increasing the amount of elapsed time since they shared a common ancestor increases their genetic distance. We also expect that the JSD between two sequences will increase proportional to the amount of time since they last shared a common ancestor. These lead to the expectation that there should be a relationship between genetic distance and JSD. This in turn leads us to formulate the following hypothesis for a divergent set with $N$ sequences. If JSD is uninformative, then the set of sequences chosen by `divergent` will be no better than a randomly selected set of size $N$. Under the alternate hypothesis, we expect the minimum genetic distance between the sequences chosen by `divergent` will be larger than that between a randomly selected set of $N$ sequences.
 
-
 If DNA sequences are homologous, then `divergent` should select sets of sequences for which their minimum genetic distance is near the upper tail of the distribution of this measure from a sampling of combinations of the same (or different size).
 
 The column labelled "P-value<0.05" identifies how many of `num` genes for which the divergent set species gave a p-value $\le 0.5$ (this value was arbitrarily chosen). The distribution for each gene was obtained by taking of the mean of 1000 randomly chosen (without replacement) combinations of species.
@@ -142,13 +144,14 @@ The choice of statistic has an impact on the number of selected sequences.
 
 As shown in \autoref{fig:compute-time}, the compute time was linear with respect to the number of sequences on random samples of the microbial genomes.
 
-Using 10 cores on a MacBook Pro M2 Max, application of `dvgt prep` followed by `dvgt nmost` to the 10560 microbial genome WOL data set took 8'13" and 4'32" (to select 100 sequences) respectively.
+Using 10 cores on a MacBook Pro M2 Max, application of `dvgt prep` followed by `dvgt nmost` to the 10560 microbial genome WOL data set took 8'13" and 3'48" (to select 100 sequences) respectively. The RAM memory per process was ~300MB.
 
 ### The cogent3 apps enable simplified usage
 
 We provide `dvgt_select_max` and `dvgt_select_nmost` as Cogent3 plugins. 
 
 # Figures
+![Identification of representatives of known groups is affected by sequence length. Divergent `max` identified representatives of known groups in both *balanced*, and *imbalanced* pools.](figs/synthetic_known_bar.png){#fig:synthetic-knowns}
 
 ![The statistical performance of `dvgt max` in recovering representative sequences is a function of $k$ and the chosen statistic. Trendlines were estimated using LOWESS. (a) Performance is represented by *Significant%*, the percentage of cases in which the sequences selected by `divergent` rejected the null hypothesis at the nominal $\le 0.05$ level. (b) Both $k$ and the statistic impact on the number of sequences selected by divergent `max`.](figs/jsd_v_dist.png){#fig:jsd-v-dist}
 

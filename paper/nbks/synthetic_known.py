@@ -3,7 +3,6 @@ from itertools import product
 from cogent3 import make_table, make_unaligned_seqs
 from cogent3.app import typing as c3_types
 from cogent3.app.composable import NotCompleted, define_app
-from cogent3.util import parallel as PAR
 from numpy import array
 from numpy.random import choice, shuffle
 from rich.progress import track
@@ -104,22 +103,21 @@ def do_run(pool, num_reps, seq_len, k=3, stat="stdev"):
 
 @define_app
 class eval_condition:
-    def __init__(self, seq_len, num_reps, k, repeats, pools) -> None:
+    def __init__(self, num_reps, k, repeats, pools) -> None:
         self.num_reps = num_reps
         self.k = k
         self.repeats = repeats
         self.pools = pools
-        self.seq_len = seq_len
 
-    def main(self, settings: tuple[str]) -> c3_types.TabularType:
-        title, stat = settings
+    def main(self, settings: tuple[str, str, int]) -> c3_types.TabularType:
+        title, stat, seq_len = settings
         pool = self.pools[title]
         num_correct = []
         for _ in range(self.repeats):
             r = do_run(
                 pool=pool,
                 num_reps=self.num_reps,
-                seq_len=self.seq_len,
+                seq_len=seq_len,
                 k=self.k,
                 stat=stat,
             )
@@ -137,7 +135,7 @@ class eval_condition:
                 "mean(correct)",
                 "stdv(correct)",
             ],
-            data=[[self.num_reps, self.repeats, self.seq_len, stat, mean, stdev]],
+            data=[[self.num_reps, self.repeats, seq_len, stat, mean, stdev]],
             title=title,
         )
 
@@ -146,39 +144,23 @@ def main():
     BALANCED = dict(a=25, b=25, c=25, d=25)
     IMBALANCED = dict(a=1, b=49, c=25, d=25)
     config = dict(
-        seq_len=200,
         num_reps=50,
         k=1,
-        repeats=3,
+        repeats=5,
         pools=dict(balanced=BALANCED, imbalanced=IMBALANCED),
     )
     app = eval_condition(**config)
     pools = "balanced", "imbalanced"
+    seq_len = 200, 1000
 
     result_tables = []
-    settings = list(product(pools, STATS))
-    series = PAR.as_completed(app, settings, max_workers=6)
+    settings = list(product(pools, STATS, seq_len))
     series = map(app, settings)
-    for t in track(series, total=len(settings), description="200bp sim"):
+    for t in track(series, total=len(settings)):
         if not t:
             print(t)
         result_tables.append(t)
 
-    config["seq_len"] = 1000
-    app = eval_condition(**config)
-    pools = "balanced", "imbalanced"
-    settings = list(product(pools, STATS))
-    series = PAR.as_completed(app, settings, max_workers=6)
-    for t in track(
-        series,
-        total=len(settings),
-        description=f"{config['seq_len']}bp sim",
-    ):
-        if not t:
-            print(t)
-        result_tables.append(t)
-
-    app = eval_condition(**config)
     table = result_tables[0].appended("pool", result_tables[1:])
     table = table.sorted(columns=["seq_len", "pool", "stat"])
     table.columns["correct%"] = (
