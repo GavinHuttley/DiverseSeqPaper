@@ -78,12 +78,13 @@ Add a figure describing the core algorithm as a flow chart.
 The `dvgt prep` sub-command converts plain text sequence data into an on disk storage format that is more efficient for interrogation in the other steps. A user can provide either fasta or GenBank formatted DNA sequence files. The sequences are converted into unsigned 8-bit integer numpy arrays and stored in a single HDF5 file on disk. The resulting `.dvgtseqs` file is required for both the `max` and `nmost` commands.
 
 We implement the following performance optimizations:
+- We transform integer sequences into k-mer counts by transforming a series of consecutive bases into a single unsigned 64-bit integer. 
 - Sequence data is converted into HDF5 storage on disk. 
 - K-mer counts are only computed when a sequence record is being considered for inclusion in the divergent set. This has the effect of reducing the amount of memory required to the desired divergent set size plus one but has no impact on compute time.
 - We use `numba` for just-in-time compilation of core algorithms for producing k-mers and their counts.
-- 
 
-**Algorithm 1** The divergent `max` algorithm.\label{algorithm:max}
+
+**Algorithm 1** The divergent `nmost` algorithm.\label{algorithm:nmost}
 
 ```python
 records: list[KmerSeq]  # a list of sequence converted into k-mer counts
@@ -96,17 +97,21 @@ shuffle(records)  # randomise the order of the records
 sr = SummedRecords.from_records(records[:min_size])
 for r in records:
     if sr.increases_jsd(r):
-      # Adding r to the N-1 set increased JSD over sr.jsd
-      nsr = sr + r  # create a new set with the current set and r
-      sr = nsr if nsr.std > sr.std else sr.replaced_lowest(r)
-      # if the new set has a higher standard deviation, keep the new set
-      # otherwise retain the same set size, but replace the lowest record.
-      if sr.size > max_size:
-        # we stay within the user specified limits
-        sr = sr.dropped_lowest()
+      sr = sr.replaced_lowest(r)
 ```
 
-We transform integer sequences into k-mer counts by transforming a series of consecutive bases into a single unsigned 64-bit integer. 
+**Algorithm 2** The divergent `max` algorithm. This amends the within-loop condition of `nmost` to the following, where `std` represents the standard deviation of $\delta_{JSD}$.\label{algorithm:max}
+
+```python
+if sr.increases_jsd(r):
+  # adding r to the N-1 set increased JSD over sr.jsd
+  nsr = sr + r  # create a new set with the current set and r
+  sr = nsr if nsr.std > sr.std else sr.replaced_lowest(r)
+  # if the new set has a higher standard deviation, keep the new set
+  if sr.size > max_size:
+    # stay within the user specified limits by dropping the lowest
+    sr = sr.dropped_lowest()
+```
 
 # `dvgt` command line application
 
@@ -151,6 +156,7 @@ Using 10 cores on a MacBook Pro M2 Max, application of `dvgt prep` followed by `
 We provide `dvgt_select_max` and `dvgt_select_nmost` as Cogent3 plugins. 
 
 # Figures
+
 ![Identification of representatives of known groups is affected by sequence length. Divergent `max` identified representatives of known groups in both *balanced*, and *imbalanced* pools.](figs/synthetic_known_bar.png){#fig:synthetic-knowns}
 
 ![The statistical performance of `dvgt max` in recovering representative sequences is a function of $k$ and the chosen statistic. Trendlines were estimated using LOWESS. (a) Performance is represented by *Significant%*, the percentage of cases in which the sequences selected by `divergent` rejected the null hypothesis at the nominal $\le 0.05$ level. (b) Both $k$ and the statistic impact on the number of sequences selected by divergent `max`.](figs/jsd_v_dist.png){#fig:jsd-v-dist}
