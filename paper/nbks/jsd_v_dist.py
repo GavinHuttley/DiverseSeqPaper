@@ -199,7 +199,7 @@ def max(data_path, outpath_stats, outpath_sizes, dry_run, max_k, serial, repeats
             product(
                 range(2, max_k),  # k values
                 (5, 10),  # min_size values
-                (10,),  # max_size value
+                (30,),  # max_size value
                 ("stdev", "cov"),  # stat values
             ),
         )
