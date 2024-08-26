@@ -7,9 +7,9 @@ from numpy import array
 from numpy.random import choice, shuffle
 from rich.progress import track
 
-from divergent import util as dvgt_utils
-from divergent.record import KmerSeq, SeqArray, seqarray_to_kmerseq
-from divergent.records import max_divergent
+from diverse_seq import util as dvs_utils
+from diverse_seq.record import KmerSeq, SeqArray, seqarray_to_kmerseq
+from diverse_seq.records import max_divergent
 
 POOL = {"a": "ACGGGGGT", "b": "ACCCCCGT", "c": "AAAAACGT", "d": "ACGTTTTT"}
 STATS = "stdev", "cov"
@@ -39,7 +39,7 @@ class make_sample:
 @define_app
 class seqcoll_to_records:
     def __init__(self, k: int):
-        self.s2a = dvgt_utils.str2arr(moltype="dna")
+        self.s2a = dvs_utils.str2arr(moltype="dna")
         self.a2k = seqarray_to_kmerseq(k=k, moltype="dna")
 
     def main(self, seqs: c3_types.UnalignedSeqsType) -> list[KmerSeq]:

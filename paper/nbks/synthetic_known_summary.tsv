@@ -1,0 +1,9 @@
+pool	pop_size	repeats	seq_len	stat	mean(correct)	stdv(correct)	correct%
+balanced	50	5	200	cov	49.6	0.5477225575051661	99.2
+balanced	50	5	200	stdev	49.6	0.5477225575051661	99.2
+imbalanced	50	5	200	cov	48.8	0.8366600265340756	97.6
+imbalanced	50	5	200	stdev	43.6	2.3021728866442674	87.2
+balanced	50	5	1000	cov	50.0	0.0	100.0
+balanced	50	5	1000	stdev	44.8	2.3874672772626644	89.6
+imbalanced	50	5	1000	cov	50.0	0.0	100.0
+imbalanced	50	5	1000	stdev	49.6	0.5477225575051661	99.2
