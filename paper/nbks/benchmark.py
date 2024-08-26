@@ -9,8 +9,8 @@ from click.testing import CliRunner
 from cogent3 import make_table
 from rich import progress as rich_progress
 
-from divergent import cli as dvgt_cli
-from divergent import util as dvgt_util
+from diverse_seq import cli as dvs_cli
+from diverse_seq import util as dvs_util
 
 RUNNER = CliRunner()
 
@@ -46,19 +46,21 @@ _click_command_opts = dict(
 )
 
 
-def run_prep(temp_dir, seqdir, dvgt_file, suffix, num_seqs):
+def run_prep(temp_dir, seqdir, dvs_file, suffix, num_seqs):
     # run the prep command
-    args = f"-s {seqdir} -o {dvgt_file} -sf {suffix} -L {num_seqs} -np 1".split()
+    args = f"-s {seqdir} -o {dvs_file} -sf {suffix} -L {num_seqs} -np 1 -hp".split()
     with TimeIt() as timer:
-        r = RUNNER.invoke(dvgt_cli.prep, args, catch_exceptions=False)
+        r = RUNNER.invoke(dvs_cli.prep, args, catch_exceptions=False)
         assert r.exit_code == 0, r.output
     return timer.get_elapsed_time()
 
 
 def run_max(seqfile, outpath, k):
-    args = f"-s {seqfile} -o {outpath} --min_size 5 --max_size 10 -k {k} -np 1".split()
+    args = (
+        f"-s {seqfile} -o {outpath} --min_size 5 --max_size 10 -k {k} -np 1 -hp".split()
+    )
     with TimeIt() as timer:
-        r = RUNNER.invoke(dvgt_cli.max, args, catch_exceptions=False)
+        r = RUNNER.invoke(dvs_cli.max, args, catch_exceptions=False)
         assert r.exit_code == 0, r.output
     return timer.get_elapsed_time()
 
@@ -73,7 +75,7 @@ def run(seqdir, suffix, outpath):
     kmer_sizes = [2, 3, 4, 5, 6, 7, 8]
     num_seqs = [50, 100, 150, 200]
     results = []
-    with dvgt_util.keep_running():
+    with dvs_util.keep_running():
         with rich_progress.Progress(
             rich_progress.TextColumn("[progress.description]{task.description}"),
             rich_progress.BarColumn(),
@@ -86,11 +88,11 @@ def run(seqdir, suffix, outpath):
                 seqnum = progress.add_task("Doing num seqs", total=len(num_seqs))
                 for num in num_seqs:
                     with TempWorkingDir() as temp_dir:
-                        dvgt_file = temp_dir / f"dvgt_L{num}.dvgtseqs"
+                        dvs_file = temp_dir / f"dvs_L{num}.dvseqs"
                         elapsed_time = run_prep(
                             temp_dir,
                             seqdir,
-                            dvgt_file,
+                            dvs_file,
                             suffix,
                             num,
                         )
@@ -103,7 +105,7 @@ def run(seqdir, suffix, outpath):
                         )
                         for k in kmer_sizes:
                             kout = temp_dir / f"selected-{k}.tsv"
-                            elapsed_time = run_max(dvgt_file, kout, k)
+                            elapsed_time = run_max(dvs_file, kout, k)
                             results.append(("max", num, k, elapsed_time))
                             progress.update(kmers, advance=1, refresh=True)
                         progress.remove_task(kmers)
