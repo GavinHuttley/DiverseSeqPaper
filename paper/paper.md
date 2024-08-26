@@ -77,7 +77,7 @@ From the equation, it is apparent that to update the JSD of a collection efficie
 
 The algorithm for computing the Jensen-Shannon divergence is quite simple. What follows are the optimisations we have employed to make the calculations scalable in terms of the number of sequences.
 
-1. Sequence data is saved as unsigned-8 bit integers in HDF5 storage on disk.
+1. Sequence data is saved BLOSC2 compressed as unsigned-8 bit integers in HDF5 storage on disk.
 2. A $k$-mer is identified as an index in a $4^k$ vector with counts stored with sufficient integer precision to capture the vector's maximum element.
 3. $k$-mers are only counted when a sequence record is considered for inclusion in the divergent set, reducing the memory required to that for the user-nominated size.
 4. We use `numba` for just-in-time compilation of core algorithms for producing $k$-mers and their counts.
