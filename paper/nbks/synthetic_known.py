@@ -155,8 +155,7 @@ def main():
 
     result_tables = []
     settings = list(product(pools, STATS, seq_len))
-    series = map(app, settings)
-    for t in track(series, total=len(settings)):
+    for t in track(map(app, settings), total=len(settings)):
         if not t:
             print(t)
         result_tables.append(t)
