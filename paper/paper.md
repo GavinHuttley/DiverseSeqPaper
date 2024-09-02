@@ -47,7 +47,7 @@ As the size of DNA sequence datasets continues to grow, there is need for a tool
 
 # Statement of need
 
-Bioinformatics data sampling workflows benefit by being able to select a subset of sequences that represent the full diversity present in a large sequence collections [e.g. @zhu.2019.nat.commun]. For some analyses, including groups of highly related sequences imposes a significant computational cost for no information gain (cite). In some circumstances, retention of such related groups can lead to biases in estimation (cite). The motivation for selecting representative groups of sequences can thus be both computational performance and statistical accuracy.
+Bioinformatics data sampling workflows benefit by being able to select a subset of sequences that represent the full diversity present in a large sequence collections [e.g. @parks.2018.natbiotechnol; @zhu.2019.nat.commun]. For some analyses, including groups of highly related sequences imposes a significant computational cost for no information gain (cite). In some circumstances, retention of such related groups can lead to biases in estimation (cite). The motivation for selecting representative groups of sequences can thus be both computational performance and statistical accuracy.
 
 Other tools require the existence of input data formats that themselves can be computationally costly to acquire. For instance, tree-based sampling procedures can be efficient but rely on a phylogenetic tree or a pairwise distance matrix, both of which require sequence alignment [e.g. @widmann.2006.molcellproteomics; @balaban.2019.plosone] (todo: check what source Balaban method presumes their tree comes from). Thus, while tree traversal algorithms are efficient, the estimation of the tree may not be. The same holds for distance estimation.
 
@@ -152,7 +152,6 @@ For large-scale analyses, we recommend the command line `nmost` tool. The choice
 
 # TODO's
 
-- [ ] sort out the simulation issue
 - [ ] read the Balaban paper
 - [ ] check the Sokal reference
 - [ ] upload the big data sets to Zenodo
@@ -161,9 +160,9 @@ For large-scale analyses, we recommend the command line `nmost` tool. The choice
 
 ![Identification of representatives of known groups is affected by sequence length. `dvs max` identified representatives of known groups in both *balanced*, and *imbalanced* pools. (TODO: check correctness of simulation labels, why is 1k seqs more variable for balanced stdev?)](figs/synthetic_known_bar.png){#fig:synthetic-knowns}
 
-![The statistical performance of `dvs max` in recovering representative sequences is a function of $k$ and the chosen statistic. The minimum and maximum allowed set sizes were 5 and 30, respectively. Trendlines were estimated using LOWESS [@cleveland.1979.j.am.stat.assoc]. (a) Statistical performance is represented by *Significant%*, the percentage of cases in which the minimal genetic distance between sequences selected by `dvs` beat ($p-\text{value} \le 0.05$ level) that of a random selection process. (b) The mean and standard deviations of the number of sequences selected by `dvs max`.](figs/jsd_v_dist.png){#fig:jsd-v-dist}
+![The statistical performance of `dvs max` in recovering representative sequences is a function of $k$ and the chosen statistic. The minimum and maximum allowed set sizes were 5 and 30, respectively. `dvs nmost` is represented by $JSD(\mathbb{F})$ run with n=5. Trendlines were estimated using LOWESS [@cleveland.1979.j.am.stat.assoc]. (a) *Significant%* is the percentage of cases where `dvs max` was significantly better ($p-\text{value} \le 0.05$) at selecting divergent sequences than a random selection process. (b) The mean and standard deviations of the number of sequences selected by `dvs max`.](figs/jsd_v_dist.png){#fig:jsd-v-dist}
 
-![Result of applying the `dvs_selected_max` app to a single sequence alignment. The phylogenetic tree was estimated using Neighbour-Joining [@saitou.1987.mol.biol.evol] from the pairwise paralinear distances [@lake.1994.procnatlacadsciua]. See the `plugin_demo` notebook for the code used to produce this figure.](figs/selected_edges.png){#fig:selected-edges}
+![Result of applying the `dvs_max` app to a single sequence alignment. The phylogenetic tree was estimated using Neighbour-Joining [@saitou.1987.mol.biol.evol] from the pairwise paralinear distances [@lake.1994.procnatlacadsciua]. See the `plugin_demo` notebook for the code used to produce this figure.](figs/selected_edges.png){#fig:selected-edges}
 
 ![`dvs max` exhibits linear time performance with respect to the number of microbial genome sequences. Three replicates were performed for each condition. For each repeat, sequences were randomly sampled without replacement from the 960 REFSOIL microbial data set [@choi.2017.ismej].](figs/compute_time.png){#fig:compute-time}
 
