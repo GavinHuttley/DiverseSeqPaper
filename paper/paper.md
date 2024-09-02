@@ -126,7 +126,7 @@ if sr.increases_jsd(r):
 
 ## `dvs` cogent3 plugins
 
-We provide `dvs_select_nmost` and `dvs_select_max` as Cogent3 apps, made available to users at runtime via cogent3 `get_app()`. The apps mirror the settings from their command-line application but differ in that they operate directly on a sequence collection (skipping conversion to disk storage), returning the selected subset of sequences. This is demonstrated in the `plugin_demo.ipynb` notebook.
+We provide `dvs_nmost` and `dvs_max` as Cogent3 apps, made available to users at runtime via cogent3 `get_app()`. The apps mirror the settings from their command-line application but differ in that they operate directly on a sequence collection (skipping conversion to disk storage), returning the selected subset of sequences. This is demonstrated in the `plugin_demo.ipynb` notebook.
 
 # Performance
 
