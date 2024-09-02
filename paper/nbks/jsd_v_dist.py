@@ -12,7 +12,7 @@ from rich.progress import track
 from scipy.special import binom
 
 from diverse_seq import util as dvs_utils
-from diverse_seq.records import dvs_select_max, dvs_select_nmost
+from diverse_seq.records import dvs_max, dvs_nmost
 
 
 def get_combinations(all_vals, choose, number):
@@ -46,7 +46,7 @@ class min_dist:
 @define_app
 class compare_sets:
     """compares the minimum genetic distance from a sets of sequences identified
-    by dvs_select_max against randomly drawn sets of the same size"""
+    by dvs_max against randomly drawn sets of the same size"""
 
     def __init__(
         self,
@@ -71,7 +71,7 @@ class compare_sets:
         dists = stats["mean(dist)"]
         obs = dists[0]
         # we estimate the probability the minimum genetic distance from
-        # the num sequences identified by dvs_select_max equals that of a random
+        # the num sequences identified by dvs_max equals that of a random
         # draw of num sequences by counting the number of times the min distance from
         # the latter is greater than or equal to the diverged set.
         gt = sum(v >= obs for v in dists[1:])
@@ -95,7 +95,7 @@ def run_nmost(
     """runs a specific combination of parameters"""
     with dvs_utils.keep_running():
         loader = io.load_aligned(moltype="dna")
-        app = dvs_select_nmost(k=k, n=size)
+        app = dvs_nmost(k=k, n=size)
         make_distn = compare_sets(
             dist_size=dist_size,
             app=app,
@@ -130,7 +130,7 @@ def run_max(
     """runs a specific combination of parameters"""
     with dvs_utils.keep_running():
         loader = io.load_aligned(moltype="dna")
-        app = dvs_select_max(
+        app = dvs_max(
             k=k,
             min_size=min_size,
             max_size=max_size,
