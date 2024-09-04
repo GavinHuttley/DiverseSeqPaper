@@ -65,7 +65,7 @@ For a collection of DNA sequences $\mathbb{S}$ with size $N$, define $f_i$ as th
 JSD(\mathbb{F})=H \left( \frac{1}{N}\sum_i^N f_i \right) - \overline{H(\mathbb{F})}
 \end{equation*}
 
-where the first term corresponds to the Shannon entropy of the mean of the $N$ probability vectors and the second term $\overline{H(\mathbb{F})}$ is the mean of their corresponding Shannon entropies. For vector $f_i \in \mathbb{F}$, its contribution to the total JSD of $\mathbb{F}$ is
+where the first term corresponds to the Shannon entropy of the mean of the $N$ probability vectors and the second term $\overline{H(\mathbb{F})}$ is the mean of their corresponding Shannon entropies. For vector $f_i$, $f_i \in \mathbb{F}$, its contribution to the total JSD of $\mathbb{F}$ is
 
 \begin{equation}
 \delta_{JSD}(i)=JSD(\mathbb{F})-JSD(\mathbb{F} - \{i\})
