@@ -57,7 +57,7 @@ The `diverse-seq` algorithm is linear in time and more flexible than published a
 
 A $k$-mer is a subsequence of length $k$ and a $k$-mer probability vector has elements corresponding to the frequency of each $k$-mer in a sequence. The Shannon entropy of a probability vector is calculated as $H=-\sum_i p_i \log_2 p_i$ where $p_i$ is the probability of the $i$-th $k$-mer. As an indication of the interpretability of Shannon entropy, a DNA sequence with equifrequent nucleotides has the maximum possible $H=2$ while a sequence with a single nucleotide has $H=0$. Thus, this quantity represents a measure of "uncertainty" in the vector and is commonly used in sequence analysis, for example, to define the information content of DNA sequences as displayed in sequence logos [@schneider.1990.nucleicacidsres].
 
-Shannon entropy is integral to other statistical measures that quantify uncertainty, including Jensen-Shannon divergence (JSD), which we employ in this work [@lin.1991.ieeetrans.inf.theory]. As illustrated in Table 1, the magnitude of JSD reflects the level of relatedness amongst sequences via the similarity between their $k$-mer probability vectors.
+Shannon entropy is integral to other statistical measures that quantify uncertainty [@lin.1991.ieeetrans.inf.theory], including Jensen-Shannon divergence (JSD), which we employ in this work. As illustrated in Table 1, the magnitude of JSD reflects the level of relatedness amongst sequences via the similarity between their $k$-mer probability vectors.
 
 For a collection of DNA sequences $\mathbb{S}$ with size $N$, define $f_i$ as the $k$-mer frequency vector for sequence $s_i, s_i \in \mathbb{S}$. The JSD for the resulting set of vectors, $\mathbb{F}$, is
 
@@ -65,7 +65,7 @@ For a collection of DNA sequences $\mathbb{S}$ with size $N$, define $f_i$ as th
 JSD(\mathbb{F})=H \left( \frac{1}{N}\sum_i^N f_i \right) - \overline{H(\mathbb{F})}
 \end{equation*}
 
-where the first term corresponds to the Shannon entropy of the mean of the $N$ probability vectors and the second term $\overline{H(\mathbb{F})}$ is the mean of their corresponding Shannon entropies. For vector $f_i$, its contribution to the total JSD of $\mathbb{F}$ is
+where the first term corresponds to the Shannon entropy of the mean of the $N$ probability vectors and the second term $\overline{H(\mathbb{F})}$ is the mean of their corresponding Shannon entropies. For vector $f_i \in \mathbb{F}$, its contribution to the total JSD of $\mathbb{F}$ is
 
 \begin{equation}
 \delta_{JSD}(i)=JSD(\mathbb{F})-JSD(\mathbb{F} - \{i\})
