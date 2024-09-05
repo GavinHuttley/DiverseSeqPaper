@@ -68,7 +68,7 @@ JSD(\mathbb{F})=H \left( \frac{1}{N}\sum_i^N f_i \right) - \overline{H(\mathbb{F
 where the first term corresponds to the Shannon entropy of the mean of the $N$ probability vectors and the second term $\overline{H(\mathbb{F})}$ is the mean of their corresponding Shannon entropies. For vector $f_i$, $f_i \in \mathbb{F}$, its contribution to the total JSD of $\mathbb{F}$ is
 
 \begin{equation}
-\delta_{JSD}(i)=JSD(\mathbb{F})-JSD(\mathbb{F} - \{i\})
+\delta_{JSD}(i)=JSD(\mathbb{F})-JSD(\mathbb{F} - \{f_i\})
 \end{equation}\label{eqn:delta-jsd}
 
 From the equation, it is apparent that to update the JSD of a collection efficiently, we need only track $k$-mer counts, total Shannon entropy and the number of sequences in the collection. Thus, the algorithm can be implemented with a single pass through the data.
