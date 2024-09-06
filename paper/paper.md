@@ -39,7 +39,7 @@ see this paper as an example https://joss.theoj.org/papers/10.21105/joss.06875
 summary for non specialists
 --->
 
-Many bioinformatic workflows can benefit from the selection of a representative subset of a much larger dataset. A subset that efficiently captures the diversity in a large sample can, for instance, avoid sample imbalance in selecting data for machine learning projects. Such a subset of homologous sequences, for instance, can be used to efficiently tune parameters for the multiple sequence alignment of tens of thousands of genomes. Existing approaches to selecting a representative subset of sequences may rely on pre-processing steps that are computationally inefficient and / or not applicable to the full range of potential applications. For instance, a phylogenetic tree provides a good basis for sampling representative sequences but the computational cost of producing that tree can be prohibitive.
+Many bioinformatic workflows can benefit from the selection of a representative subset of a much larger dataset. A subset that efficiently captures the diversity in a large sample can, for instance, avoid sample imbalance in selecting data for machine learning projects. Such a subset of homologous sequences, for instance, can be used to efficiently tune parameters for the multiple sequence alignment of tens of thousands of genomes. Existing approaches to selecting a representative subset of sequences rely on pre-processing steps that are computationally inefficient and / or not applicable to the full range of potential applications. For instance, a phylogenetic tree provides a good basis for sampling representative sequences but the computational cost of producing that tree can be prohibitive.
 
 As the size of DNA sequence datasets continues to grow, there is need for a tool that efficiently solves this problem, both statistically and computationally. To this end, we have developed `diverse-seq`, an alignment-free algorithm that identifies representatives of the diversity in a sequence collection. We show that the entropy measure of $k$-mer frequencies employed by `diverse-seq` allows it to identify sequences that correspond well with genetic distance based sampling. The computational performance of `diverse-seq` is linear with respect to the number of sequences and can be run in parallel. Applied to a collection of 10.5k whole microbial genomes on a laptop, `diverse-seq` took ~8 minutes to prepare the data and 4 minutes to select 100 representatives.
 
@@ -51,10 +51,7 @@ Bioinformatics data sampling workflows benefit from the selection of a subset of
 
 Existing tools require input data in formats that themselves can be computationally costly to acquire. For instance, tree-based sampling procedures can be efficient, but they rely on a phylogenetic tree or a pairwise distance matrix, both of which require sequence alignment [e.g. @widmann.2006.molcellproteomics; @balaban.2019.plosone] (todo: check what source Balaban method presumes their tree comes from). Thus, while tree traversal algorithms are efficient, the estimation of the tree is likely to not be. The same holds for distance estimation.
 
-The `diverse-seq` algorithm is linear in time and more flexible than published approaches. It is alignment-free and does not require sequences to be related. However, in the case that the sequences are homologous, the set selected by `diverse-seq` is comparable to what would be expected under published approaches. 
-<!--
-published approaches where sampling is based on genetic distance. 
---->
+The `diverse-seq` algorithm is linear in time and more flexible than published approaches. It is alignment-free and does not require sequences to be related. However, in the case that the sequences are homologous, the set selected by `diverse-seq` is comparable to what would be expected under published approaches where sampling is based on genetic distance @balaban.2019.plosone.
 
 # Definitions
 
