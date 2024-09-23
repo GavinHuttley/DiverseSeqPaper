@@ -25,14 +25,8 @@ date: 13 August 2024
 bibliography: paper.bib
 header-includes:
   - \input{header.tex}
+  - \DeclareMathOperator*{\argmin}{argmin}
 ---
-
-<!--
-
-see this paper as an example https://joss.theoj.org/papers/10.21105/joss.06875
- and the instructions on their markdown format https://joss.readthedocs.io/en/latest/paper.html
--->
-
 
 
 # Summary
@@ -50,7 +44,7 @@ As the size of DNA sequence datasets continues to grow, there is need for a tool
 
 Bioinformatics data sampling workflows benefit from the selection of a subset of sequences that represent the full diversity present in large sequence collections [e.g. @parks.2018.natbiotechnol; @zhu.2019.nat.commun]. For some analyses, including groups of highly related sequences imposes a significant computational cost for no information gain (cite). In some circumstances, retention of highly related groups can lead to biases in estimation (cite). The motivation for selecting representative groups of sequences can thus be driven by both computational performance and statistical accuracy.
 
-Existing tools require input data in formats that themselves can be computationally costly to acquire. For instance, tree-based sampling procedures can be efficient, but they rely on a phylogenetic tree or a pairwise distance matrix, both of which require sequence alignment [e.g. @widmann.2006.molcellproteomics; @balaban.2019.plosone] (todo: check what source Balaban method presumes their tree comes from). Thus, while tree traversal algorithms are efficient, the estimation of the tree is likely to not be. The same holds for distance estimation.
+Existing tools require input data in formats that themselves can be computationally costly to acquire. For instance, tree-based sampling procedures can be efficient, but they rely on a phylogenetic tree or a pairwise distance matrix, both of which require sequence alignment [e.g. @widmann.2006.molcellproteomics; @balaban.2019.plosone]. Thus, while tree traversal algorithms are efficient, the estimation of the can tree combine the time for sequence alignment and tree estimation.
 
 The `diverse-seq` algorithm is linear in time and more flexible than published approaches. It is alignment-free and does not require sequences to be related. However, in the case that the sequences are homologous, the set selected by `diverse-seq` is comparable to what would be expected under published approaches where sampling is based on genetic distance @balaban.2019.plosone.
 
@@ -74,52 +68,19 @@ where the first term corresponds to the Shannon entropy of the mean of the $N$ p
 
 From the equation, it is apparent that to update the JSD of a collection efficiently, we need only track $k$-mer counts, total Shannon entropy and the number of sequences in the collection. Thus, the algorithm can be implemented with a single pass through the data.
 
+To facilitate the description below, we define the record with the minimum $\delta_{JSD}$ as $$lowest = \argmin_{i \in N} \delta_{JSD}(i)$$
+
 # Algorithm
 
 The algorithm for computing the Jensen-Shannon divergence is quite simple. What follows are the optimisations we have employed to make the calculations scalable in terms of the number of sequences.
 
-1. Sequence data is BLOSC2 compressed as unsigned-8 bit integers and saved in HDF5 storage on disk.
-2. A $k$-mer is identified as an index in a $4^k$ vector with counts stored with sufficient integer precision to capture the vector's maximum element. 
-<!-- phrasing of 2 is confusing --->
-3. $k$-mers are only counted when a sequence record is considered for inclusion in the divergent set, reducing the memory required to that for the user-nominated size. 
-4. `numba`, a just-in-time compiler, is used for the core algorithms producing $k$-mers and their counts, providing an order of magnitude speed up over a pure python implementation (cite numba).
+1. Sequence data is BLOSC2 compressed as unsigned-8 bit integers and saved in HDF5 format on disk.
+2. `numba`, a just-in-time compiler, is used for the core algorithms producing $k$-mers and their counts, providing a significant speed up over a pure python implementation [@numba].
+3. Sequence loading and $k$-mer counting is triggered when a sequence record is considered for inclusion in the divergent set, reducing the memory required to that for the user-nominated size.
 
-The `dvs prep` sub-command converts plain text sequence data into an on-disk storage format that is more efficient for access in the other steps. A user can provide either fasta or GenBank formatted DNA sequence files. The sequences are converted into unsigned 8-bit integer `numpy` arrays and stored in a single HDF5 file on disk. The resulting `.dvseqs` file is required for the `max` and `nmost` commands.
+The `prep` sub-command converts plain text sequence data into an on-disk storage format that is more efficient for access in the other steps. A user can provide either fasta or GenBank formatted DNA sequence files. The sequences are converted into unsigned 8-bit integer `numpy` arrays and stored in a single HDF5 file on disk. The resulting `.dvseqs` file is required for the `max` and `nmost` sub-commands.
 
-> **Info**
-> Possibly better served with a figure than embedding linted code?
-> Kath agrees, figure could be better. 
-
-**Algorithm 1** The `diverse-seq` `nmost` algorithm.\label{algorithm:nmost}
-
-```python
-records: list[KmerSeq]  # a list of sequence converted into k-mer counts
-min_size: int  # the minimum size of the divergent set
-max_size: int  # the maximum size of the divergent set
-shuffle(records)  # randomise the order of the records
-
-# SummedRecords sorts records by their delta-JSD. The record
-# with the lowest delta-JSD is excluded from the N-1 set.
-sr = SummedRecords.from_records(records[:min_size])
-for r in records:
-    if sr.increases_jsd(r):
-      sr = sr.replaced_lowest(r)
-```
-
-If the input sequence collection consisted of equally distant sequences (in terms of a genetic distance measure), then a representative set would exhibit maximum variance in $\delta_{JSD}$. For the `dvs max` algorithm, we provide users a choice of two measures of variance in $\delta_{JSD}$: the standard deviation or the coefficient of variation (Algorithm 2).
-
-**Algorithm 2** The `diverse-seq`  `max` algorithm. This amends the within-loop condition of `nmost` to the following, where `std` represents the standard deviation of $\delta_{JSD}$.\label{algorithm:max}
-
-```python
-if sr.increases_jsd(r):
-  # adding r to the N-1 set increased JSD over sr.jsd
-  nsr = sr + r  # create a new set with the current set and r
-  sr = nsr if nsr.std > sr.std else sr.replaced_lowest(r)
-  # if the new set has a higher standard deviation, keep the new set
-  if sr.size > max_size:
-    # stay within the user specified limits by dropping the lowest
-    sr = sr.dropped_lowest()
-```
+The `nmost` algorithm defines an exact number of sequences to be selected that maximise the JSD. The order of input sequences is randomised and the selected set is initialised with the first $n$ sequences. As shown in \autoref{algo:nmost}, for each of the remaining sequences, if adding it to the set $\mathbb{F} - {lowest}$ increases JSD, it replaces $lowest$. The `max` algorithm differs from `nmost` by defining lower and upper bounds for the number of sequences in the divergent set. It further amends the within-loop condition (\autoref{algo:max}), allowing the number of sequences in the set to change when a statistical measure of $\delta_{JSD}$ variance increases. We provide users a choice of two measures of variance in $\delta_{JSD}$: the standard deviation or the coefficient of variation.
 
 ## `dvs` command line application
 
@@ -127,9 +88,9 @@ if sr.increases_jsd(r):
 - `nmost` samples the $n$ sequences that increase JSD most.
 - `max` samples sequences that maximise a user specified statistic, either the standard deviation or the coefficient of variation of $\delta_{JSD}$.
 
-## `dvs` cogent3 plugins
-<!-- inconsistently using cogent3 and Cogent3 --->
-We provide `dvs_nmost` and `dvs_max` as Cogent3 apps. For users with Cogent3 installed, `dvs_nmost` and `dvs_max` are available at runtime via the cogent3 function `get_app()`. The apps mirror the settings from their command-line implementation but differ in that they operate directly on a sequence collection, skipping conversion to disk storage and directly returning the selected subset of sequences. This is demonstrated in the `plugin_demo.ipynb` notebook.
+## `dvs` cogent3 apps
+
+We provide `dvs_nmost` and `dvs_max` as cogent3 apps. For users with cogent3 installed, `dvs_nmost` and `dvs_max` are available at runtime via the cogent3 function `get_app()`. The apps mirror the settings from their command-line implementation but differ in that they operate directly on a sequence collection, skipping conversion to disk storage and directly returning the selected subset of sequences. This is demonstrated in the `plugin_demo.ipynb` notebook.
 
 # Performance
 
@@ -139,9 +100,9 @@ We evaluate the ability of `dvs max` to recover known divergent lineages using s
 
 ## The selected sequences are phylogenetically diverse
 
-For homologous DNA sequences, increasing the amount of elapsed time since they shared a common ancestor increases their genetic distance due to time-dependent accumulation of  sequence changes. We expect that the JSD between two sequences will also increase proportional to the amount of time since they last shared a common ancestor. We therefore pose the null hypothesis that if JSD is not informative, then the minimum pairwise genetic distance amongst $N$ sequences chosen by `diverse_seq` will be approximately equal to the minimum pairwise genetic distance between a random selection of $N$ sequences. Under the alternate hypothesis that JSD is informative, the minimum genetic distance between sequences chosen by `diverse_seq` will be larger than between randomly selected sequences. We test this hypothesis using a resampling statistic [@sokal.1995] (TODO: Gavin find page), estimating the probability of the algorithmic choice being consistent with the null hypothesis. This probability is calculated as the proportion of 1000 randomly selected sets of sequences whose minimum genetic distance was greater or equal to that obtained from the sequences chosen by `dvs max`. We further summarised the performance of the `dvs` commands as the percentage of loci which gave a $p$-value less than 0.05. A bigger percentage is better.
+For homologous DNA sequences, increasing the amount of elapsed time since they shared a common ancestor increases their genetic distance due to time-dependent accumulation of  sequence changes. We expect that the JSD between two sequences will also increase proportional to the amount of time since they last shared a common ancestor. We therefore pose the null hypothesis that if JSD is not informative, then the minimum pairwise genetic distance amongst $N$ sequences chosen by `diverse_seq` will be approximately equal to the minimum pairwise genetic distance between a random selection of $N$ sequences. Under the alternate hypothesis that JSD is informative, the minimum genetic distance between sequences chosen by `diverse_seq` will be larger than between randomly selected sequences. We test this hypothesis using a resampling statistic [@sokal.1995, 808], estimating the probability of the algorithmic choice being consistent with the null hypothesis. This probability is calculated as the proportion of 1000 randomly selected sets of sequences whose minimum genetic distance was greater or equal to that obtained from the sequences chosen by `dvs max`. We further summarised the performance of the `dvs` commands as the percentage of loci which gave a $p$-value less than 0.05. A bigger percentage is better.
 
-We addressed the above hypothesis using 106 alignments of protein coding DNA sequences from the following 31 mammals: Alpaca, Armadillo, Bushbaby, Cat, Chimp, Cow, Dog, Dolphin, Elephant, Gorilla, Hedgehog, Horse, Human, Hyrax, Macaque, Marmoset, Megabat, Microbat, Mouse, Orangutan, Pig, Pika, Platypus, Rabbit, Rat, Shrew, Sloth, Squirrel, Tarsier, Tenrec and Wallaby. The sequences were obtained from Ensembl.org [@harrison.2024.nucleicacidsresearch] and aligned using cogent3's codon aligner [@knight.2007.genomebiol]. The genetic distance between the sequences was calculated using the paralinear distance [lake.1994.procnatlacadsciua].
+We addressed the above hypothesis using 106 alignments of protein coding DNA sequences from the following 31 mammals: Alpaca, Armadillo, Bushbaby, Cat, Chimp, Cow, Dog, Dolphin, Elephant, Gorilla, Hedgehog, Horse, Human, Hyrax, Macaque, Marmoset, Megabat, Microbat, Mouse, Orangutan, Pig, Pika, Platypus, Rabbit, Rat, Shrew, Sloth, Squirrel, Tarsier, Tenrec and Wallaby. The sequences were obtained from Ensembl.org [@harrison.2024.nucleicacidsresearch] and aligned using cogent3's codon aligner [@knight.2007.genomebiol]. The genetic distance between the sequences was calculated using the paralinear distance [@lake.1994.procnatlacadsciua].
 
 The results of the analysis (\autoref{fig:jsd-v-dist}) indicated the sucess of `dvs max` in identifying genetically diverse sequences was principally sensitive to the choice of $k$. While \autoref{fig:jsd-v-dist}(a) showed close equivalence between the statistics, \autoref{fig:jsd-v-dist}(b) indicates the size of the selected set using the standard deviation was systematically lower than for the coefficient of variation. The result from the `dvs nmost` analysis, which performed using the minimum set size argument given to `dvs max` is represented by the $JSD(\mathbb{F})$ statistic.
 
@@ -151,17 +112,18 @@ As shown in \autoref{fig:compute-time}, the compute time was linear with respect
 
 # Recommendations
 
-For large-scale analyses, we recommend use of the `nmost` command line tool. The choice of $k$ should be guided by the maximum number of unique $k$-mers in a DNA sequence of length $L$, indicated as the result of the expression $log(L/4)$. For instance, $k\approx 12$ for bacterial genomes (which are of the order $10^6$bp). For that case, as \autoref{fig:jsd-v-dist} indicates, $k=6$ for `nmost` gives a reasonable approximation. 
-<!-- could be clearer why they would want to use a smaller k but which gives a reasonable approximation --->
-
+For large-scale analyses, we recommend use of the `nmost` command line tool. The choice of $k$ should be guided by the maximum number of unique $k$-mers in a DNA sequence of length $L$, indicated as the result of the expression $log(L/4)$. For instance, $k\approx 12$ for bacterial genomes (which are of the order $10^6$bp). For individual protein coding genes, as \autoref{fig:jsd-v-dist} indicates, $k=6$ for `nmost` gives a reasonable accuracy. 
 
 # TODO's
 
-- [ ] read the Balaban paper
-- [ ] check the Sokal reference
 - [ ] upload the big data sets to Zenodo
 
 # Figures
+
+![The `diverse-seq nmost` algorithm.](figs/nmost.pdf){#algo:nmost}
+
+![The `diverse-seq max` algorithm. This includes upper and lower bounds for the size of the divergent set and amends the within-loop condition of `nmost`. The set size is increased when a record that increases JSD also increases the standard deviation of $\delta_{JSD}$.](figs/max.pdf){#algo:max}
+
 
 ![Identification of representatives of known groups is affected by sequence length. `dvs max` identified representatives of known groups in both *balanced*, and *imbalanced* pools. (TODO: check correctness of simulation labels, why is 1k seqs more variable for balanced stdev?)](figs/synthetic_known_bar.png){#fig:synthetic-knowns}
 
