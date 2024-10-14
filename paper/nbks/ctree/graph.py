@@ -85,10 +85,10 @@ def plot_likelihood_vs_ss(df, l_df, k_values, ss_values, colormap, min_k_value):
         label="IQTree likelihood",
     )
 
-    ax.set_xlabel("ss", fontsize=14)
+    ax.set_xlabel("Sketch Size", fontsize=14)
     ax.set_ylabel("Likelihood", fontsize=14)
     ax.set_title(
-        f"Likelihood vs ss for Different k Values (k >= {min_k_value})", fontsize=16
+        f"Likelihood vs Sketch Size for Different k Values (k >= {min_k_value})", fontsize=16
     )
 
     ax.set_xscale("log")
