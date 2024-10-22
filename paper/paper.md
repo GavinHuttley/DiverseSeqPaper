@@ -16,7 +16,8 @@ authors:
     orcid: 0000-0002-8459-6168
     affiliation: 1
   - name: Robert McArthur
-    affiliation: 0000-0001-9099-339X
+    orcid: 0000-0001-9099-339X
+    affiliation: 1
 
 affiliations:
  - name: Research School of Biology, Australian National University, Australia
