@@ -92,8 +92,8 @@ The `nmost` algorithm defines an exact number of sequences to be selected that m
 The mash distance [@ondov.2016.mash] is an unbiased estimate of the mutation rate between two sequences that can
 be computed in near linear time for large genome size. It estimates the mutation rate from an approximation of the
 Jaccard index between the $k$-mer sets of the two sequences (the percentage of shared $k$-mers). The approximation
-is calculated from only a random subset of all $k$-mers in the two sequences. The size of the subset is called
-the *sketch size* and contains the smallest $k$-mers when sorted by a hash function. We use agglomerative clustering with average linkage [@murtagh.2012.algorithms] based on pairwise mash distances to estimate phylogenetic trees from unaligned sequences. The resulting tree depends on the $k$-mer size and the sketch size.
+is calculated from only a random subset of all $k$-mers in the two sequences. This subset for a sequence is called the MinHash sketch. 
+The size of the MinHash sketch is called the *sketch size* and contains the smallest $k$-mers when sorted by a hash function. We use agglomerative clustering with average linkage [@murtagh.2012.algorithms] based on pairwise mash distances to estimate phylogenetic trees from unaligned sequences. The resulting tree depends on the $k$-mer size and the sketch size.
 
 ## `dvs` command line application
 
@@ -123,7 +123,7 @@ The results of the analysis (\autoref{fig:jsd-v-dist}) indicated the sucess of `
 
 ### Computational performance
 
-As shown in \autoref{fig:compute-time}, the compute time was linear with respect to the number of sequences, shown using random samples of microbial genomes from the 960 REFSOIL data set [@choi.2017.ismej]. We further trialled the algorithm on the data set of @zhu.2019.nat.commun, which consists of 10,560 whole microbial genomes.  Using 10 cores on a MacBook Pro M2 Max, application of `dvs prep` followed by `dvs nmost` took 8'9" and 3'45" (to select 100 sequences) respectively. The RAM memory per process was ~300MB.
+As shown in \autoref{fig:compute-time}, the compute time was linear with respect to the number of sequences, shown using random samples of microbial genomes from the 960 REFSOIL dataset [@choi.2017.ismej]. We further trialled the algorithm on the dataset of @zhu.2019.nat.commun, which consists of 10,560 whole microbial genomes.  Using 10 cores on a MacBook Pro M2 Max, application of `dvs prep` followed by `dvs nmost` took 8'9" and 3'45" (to select 100 sequences) respectively. The RAM memory per process was ~300MB.
 
 ## Constructing trees from $k$-mers
 
@@ -133,7 +133,7 @@ We use the mammals dataset to evaluate the statistical performance of the method
 
 ### Computational performance
 
-Robert to fill in.
+While the time complexity of the standard algorithm for agglomerative clustering is $\mathcal{O}\left(n^3\right)$, with respect to the number of sequences, the number of sequeunces is often small in comparison to the sequence lengths. As such, it was found that the most time consuming step of the algorithm was within the distance calculation. The pairwise distance calculation is done in two steps. First, is the construction of what is called the MinHash sketch for each sequence (essentially a random subset of $k$-mers of size *sketch size*), followed by the computation of distances from these sketches [@ondov.2016.mash]. The expected runtime for constructing the MinHash sketch for a sequence is $\mathcal{O}\left(l + s\log s \log l\right)$ where $l$ is the length of the sequence, and $s$ is the *sketch size*. This is essentially linear with respect to $l$ when $l$ is much larger than $s$. Hence, the time complexity for constructing all MinHash sketches is linear with respect to the combined length of all sequences. The time complexity for calculating the distance between two sequences from the MinHash sketch is $\mathcal{O}\left(s\right)$. Hence, the time complexity for calculating the pairwise distance matrix between all pairs of sequences from the sketches is $\mathcal{O}\left(sn^2\right)$. For suitable applications of this algorithm however, both the *sketch size* and the number of sequences are numerically dominated by the combined length of the sequences. Thus, the expected time to run the algorithm is linear with respect to the combined length of the sequences. This has been verified empirically with the 960 REFSOIL dataset (\autoref{fig:ctree-time}). The figure shows that as the number of sequences grows (and hence the combined length of the sequences with it), the time taken to construct the cluster tree grows linearly.
 
 # Recommendations
 
@@ -141,7 +141,7 @@ For large-scale analyses, we recommend use of the `nmost` command line tool. The
 
 # TODO's
 
-- [ ] upload the big data sets to Zenodo
+- [ ] upload the big datasets to Zenodo
 
 # Figures
 
@@ -156,11 +156,13 @@ For large-scale analyses, we recommend use of the `nmost` command line tool. The
 
 ![Result of applying the `dvs_max` app to a single sequence alignment. The phylogenetic tree was estimated using Neighbour-Joining [@saitou.1987.mol.biol.evol] from the pairwise paralinear distances [@lake.1994.procnatlacadsciua]. See the `plugin_demo` notebook for the code used to produce this figure.](figs/selected_edges.pdf){#fig:selected-edges}
 
-![`dvs max` exhibits linear time performance with respect to the number of microbial genome sequences. Three replicates were performed for each condition. For each repeat, sequences were randomly sampled without replacement from the 960 REFSOIL microbial data set [@choi.2017.ismej].](figs/compute_time.pdf){#fig:compute-time}
+![`dvs max` exhibits linear time performance with respect to the number of microbial genome sequences. Three replicates were performed for each condition. For each repeat, sequences were randomly sampled without replacement from the 960 REFSOIL microbial dataset [@choi.2017.ismej].](figs/compute_time.pdf){#fig:compute-time}
 
 ![Statistical performance of the `dvs_ctree` app on the concatenated mammals alignment as the $k$-mer size increases. The likelihood of trees generated by the app is compared to the maximum likelihood tree found by IQ-TREE [@minh.2020.iq]. For large enough sketch sizes, the likelihood approaches that of IQ-TREE and plateaus beyond a $k$-mer size of ~12.](figs/likelihood_vs_k_for_ss.pdf){#fig:ctree-k}
 
 ![Statistical performance of the `dvs_ctree` app on the concatenated mammals alignment as the sketch size increases. The likelihood of trees generated by the app is compared to the maximum likelihood tree found by IQ-TREE2 [@minh.2020.iq]. For optimal $k$-mer sizes, the likelihood approaches that of IQ-TREE and plateaus beyond a sketch size of ~2500.](figs/likelihood_vs_ss_for_k.pdf){#fig:ctree-ss}
+
+![Computational performance of the `dvs_ctree` app on 960 REFSOIL microbial dataset. The time taken to run the algorithm grows linearly with respect to the number of sequences.](figs/ctree_times/ss_2500/time_vs_numseqs.png.pdf){#fig:ctree-time}
 
 # Tables
 
