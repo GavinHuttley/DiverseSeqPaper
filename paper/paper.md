@@ -35,25 +35,25 @@ header-includes:
 summary for non specialists
 --->
 
-Bioinformatic workflows that involve computationally costly algorithms should be prototyped to reduce unnecessary computation. For instance, selecting a subset of homologous sequences can be used to identify suitable parameters for the multiple sequence alignment of tens of thousands of genomes. There are also use cases where the sequences involved are not homologous, such as can occur during machine learning projects, but representative sampling helps to avoid biases from imbalanced sequence groups.
+The development of bioinformatic workflows benefits from prototyping on smaller problem sizes or using techniques to approximate starting values. For instance, selecting a subset of homologous sequences can be used to identify suitable parameters for multiple sequence alignment of tens of thousands of sequences. Machine learning projects that involve non-homologous sequences can benefit from representative sampling as it mitigates biases from imbalanced groups.
 
 As the size of DNA sequence datasets continues to grow, a tool that efficiently solves this problem, both statistically and computationally, is needed. `diverse-seq` implements alignment-free algorithms for identifying representatives of the diversity in a sequence collection and for clustering all the sequences.
 
-For the first use case, we show that an entropy measure of $k$-mer frequencies allows `diverse-seq` to identify sequences that correspond well to conventional genetic distance based sampling. The computational performance for this case is linear with respect to the number of sequences and can be run in parallel. Applied to a collection of 10.5k whole microbial genomes on a laptop, `diverse-seq` took ~8 minutes to prepare the data and 4 minutes to select 100 representatives. For the second use case,
+For the first use case, we show that an entropy measure of $k$-mer frequencies allows `diverse-seq` to identify sequences that correspond well to conventional genetic distance based sampling. The computational performance for this case is linear with respect to the number of sequences and can be run in parallel. Applied to a collection of 10.5k whole microbial genomes on a laptop, `diverse-seq` took ~8 minutes to prepare the data and 4 minutes to select 100 representatives. For the second use case, **ROBERT fill in**.
 
-`diverse-seq` is a Python package that provides both a command-line interface and cogent3 plugins. The latter simplifies integration by users into their own analyses. It is licensed under BSD-3 and is available via the Python Package Index and GitHub.
+`diverse-seq` is a BSD-3 licensed Python package that provides both a command-line interface and cogent3 plugins. The latter simplifies integration by users into their own analyses. It is available via the Python Package Index and GitHub.
 
 # Statement of need
 
-Bioinformatics data sampling workflows benefit from the selection of a subset of sequences that represent the full diversity present in large sequence collections [e.g. @parks.2018.natbiotechnol; @zhu.2019.nat.commun]. It is also the case that the compute time of algorithms such as phylogenetic estimation greatly benefit from having a good initial estimate of the phylogeny. Thus the motivation for alignment free methods is thus both computational performance and statistical accuracy.
+Bioinformatics data sampling workflows benefit from selecting a subset of sequences that represent the full diversity present in large sequence collections [e.g. @parks.2018.natbiotechnol; @zhu.2019.nat.commun]. It is also the case that the compute time of algorithms such as phylogenetic estimation greatly benefit from having a good initial estimate. Thus, the motivation for alignment-free methods is both computational performance and statistical accuracy.
 
-Existing tools require input data in formats that themselves can be computationally costly to acquire. For instance, tree-based sampling procedures can be efficient, but they rely on a phylogenetic tree or a pairwise distance matrix, both of which require sequence alignment [e.g. @widmann.2006.molcellproteomics; @balaban.2019.plosone]. Thus, while tree traversal algorithms are efficient, the estimation of the can tree combine the time for sequence alignment and tree estimation.
+Existing tools require input data in formats that themselves can be computationally costly to acquire. For instance, tree-based sampling procedures can be efficient, but they rely on a phylogenetic tree or a pairwise distance matrix, both of which require sequence alignment [e.g. @widmann.2006.molcellproteomics; @balaban.2019.plosone]. Thus, while tree traversal algorithms are efficient, the estimation of the tree added with the time for sequence alignment and tree estimation presents a barrier to their use.
 
-The `diverse-seq` sequence selection algorithms are linear in time and more flexible than published approaches. It is alignment-free and does not require sequences to be related. However, in the case that the sequences are homologous, the set selected by `diverse-seq` is comparable to what would be expected under published approaches where sampling is based on genetic distance [@balaban.2019.plosone].
+The `diverse-seq` sequence selection algorithms are linear in time for the number of sequences and more flexible than published approaches. The clustering algorithm is linear in time for the combined sequence length. While the algorithms do not require sequences to be homologous, when applied to homologous sequences, the set selected by `diverse-seq` is comparable to what would be expected based on genetic distance.
 
 # Definitions
 
-A $k$-mer is a subsequence of length $k$ and a $k$-mer probability vector has elements corresponding to the frequency of each $k$-mer in a sequence. The Shannon entropy of a probability vector is calculated as $H=-\sum_i p_i \log_2 p_i$ where $p_i$ is the probability of the $i$-th $k$-mer. As an indication of the interpretability of Shannon entropy, a DNA sequence with equifrequent nucleotides has the maximum possible $H=2$ while a sequence with a single nucleotide has $H=0$. Thus, this quantity represents a measure of "uncertainty" in the vector and is commonly used in sequence analysis, for example, to define the information content of DNA sequences as displayed in sequence logos [@schneider.1990.nucleicacidsres].
+A $k$-mer is a subsequence of length $k$ and a $k$-mer probability vector has elements corresponding to the frequency of each $k$-mer in a sequence. The Shannon entropy of a probability vector is calculated as $H=-\sum_i p_i \log_2 p_i$ where $p_i$ is the probability of the $i$-th $k$-mer. As an indication of the interpretability of Shannon entropy, a DNA sequence with equifrequent nucleotides has the maximum possible $H=2$ while a sequence with a single nucleotide has $H=0$. Thus, $H$ represents a measure of "uncertainty" in the vector and is commonly used in sequence analysis [e.g. @schneider.1990.nucleicacidsres].
 
 Shannon entropy is integral to other statistical measures that quantify uncertainty [@lin.1991.ieeetrans.inf.theory], including Jensen-Shannon divergence (JSD), which we employ in this work. As illustrated in Table 1, the magnitude of JSD reflects the level of relatedness amongst sequences via the similarity between their $k$-mer probability vectors.
 
@@ -63,7 +63,7 @@ For a collection of DNA sequences $\mathbb{S}$ with size $N$, define $f_i$ as th
 JSD(\mathbb{F})=H \left( \frac{1}{N}\sum_i^N f_i \right) - \overline{H(\mathbb{F})}
 \end{equation*}
 
-where the first term corresponds to the Shannon entropy of the mean of the $N$ probability vectors and the second term $\overline{H(\mathbb{F})}$ is the mean of their corresponding Shannon entropies. For vector $f_i$, $f_i \in \mathbb{F}$, its contribution to the total JSD of $\mathbb{F}$ is
+where the first term corresponds to the Shannon entropy of the mean of the $N$ probability vectors and the second term $\overline{H(\mathbb{F})}$ is the mean of their corresponding Shannon entropies. For vector $f_i \in \mathbb{F}$ its contribution to the total JSD of $\mathbb{F}$ is
 
 \begin{equation}
 \delta_{JSD}(i)=JSD(\mathbb{F})-JSD(\mathbb{F} - \{f_i\})
@@ -75,7 +75,13 @@ To facilitate the description below, we define the record with the minimum $\del
 
 # Algorithms
 
+*`dvs` subcommand: `prep` converts sequences into `numpy` arrays for faster processing.*
+
+The `prep` sub-command converts plain text sequence data into an on-disk storage format that is more efficient for access in the other steps. A user can provide either fasta or GenBank formatted DNA sequence files. The sequences are converted into unsigned 8-bit integer `numpy` arrays and stored in a single HDF5 file on disk. The resulting `.dvseqs` file is required for all the sub-commands.
+
 ## Selection of representative sequences 
+
+*`dvs` subcommands: `nmost` samples the $n$ sequences that increase JSD most; `max` samples sequences that maximise a user specified statistic, either the standard deviation or the coefficient of variation of $\delta_{JSD}$.*
 
 The algorithm for computing the Jensen-Shannon divergence is quite simple. What follows are the optimisations we have employed to make the calculations scalable in terms of the number of sequences.
 
@@ -83,28 +89,17 @@ The algorithm for computing the Jensen-Shannon divergence is quite simple. What 
 2. `numba`, a just-in-time compiler, is used for the core algorithms producing $k$-mers and their counts, providing a significant speed up over a pure python implementation [@numba].
 3. Sequence loading and $k$-mer counting is triggered when a sequence record is considered for inclusion in the divergent set, reducing the memory required to that for the user-nominated size.
 
-The `prep` sub-command converts plain text sequence data into an on-disk storage format that is more efficient for access in the other steps. A user can provide either fasta or GenBank formatted DNA sequence files. The sequences are converted into unsigned 8-bit integer `numpy` arrays and stored in a single HDF5 file on disk. The resulting `.dvseqs` file is required for the `max` and `nmost` sub-commands.
-
 The `nmost` algorithm defines an exact number of sequences to be selected that maximise the JSD. The order of input sequences is randomised and the selected set is initialised with the first $n$ sequences. As shown in \autoref{algo:nmost}, for each of the remaining sequences, if adding it to the set $\mathbb{F} - {lowest}$ increases JSD, it replaces $lowest$. The `max` algorithm differs from `nmost` by defining lower and upper bounds for the number of sequences in the divergent set. It further amends the within-loop condition (\autoref{algo:max}), allowing the number of sequences in the set to change when a statistical measure of $\delta_{JSD}$ variance increases. We provide users a choice of two measures of variance in $\delta_{JSD}$: the standard deviation or the coefficient of variation.
 
-## Constructing trees from $k$-mers
+## Constructing a tree from $k$-mers
 
-The mash distance [@ondov.2016.mash] is an unbiased estimate of the mutation rate between two sequences that can
-be computed in near linear time for large genome size. It estimates the mutation rate from an approximation of the
-Jaccard index between the $k$-mer sets of the two sequences (the percentage of shared $k$-mers). The approximation
-is calculated from only a random subset of all $k$-mers in the two sequences. This subset for a sequence is called the MinHash sketch. 
-The size of the MinHash sketch is called the *sketch size* and contains the smallest $k$-mers when sorted by a hash function. We use agglomerative clustering with average linkage [@murtagh.2012.algorithms] based on pairwise mash distances to estimate phylogenetic trees from unaligned sequences. The resulting tree depends on the $k$-mer size and the sketch size.
+*`dvs` subcommand: `ctree` estimates a phylogenetic tree from unaligned sequences using mash distances.*
 
-## `dvs` command line application
-
-- `prep` converts sequences into numpy arrays for faster processing
-- `nmost` samples the $n$ sequences that increase JSD most.
-- `max` samples sequences that maximise a user specified statistic, either the standard deviation or the coefficient of variation of $\delta_{JSD}$.
-- `ctree` quick estimations of phylogenetic trees from unaligned sequences using mash distances.
+The mash distance [@ondov.2016.mash] estimates the proportion of changes between two sequences and can be computed in near linear time. It approximates the Jaccard distance between the $k$-mer sets of the two sequences (the proportion of shared $k$-mers) from a subset of all $k$-mers in the two sequences. This subset, the MinHash sketch, is the *sketch size* smallest $k$-mers when sorted by a hash function. We apply agglomerative clustering with average linkage [@murtagh.2012.algorithms] to the pairwise mash distances to estimate a phylogenetic tree from unaligned sequences. We allow the user to select the distance metric, $k$ and the sketch size.
 
 ## `dvs` cogent3 apps
 
-We provide `dvs_nmost` and `dvs_max` as cogent3 apps. For users with cogent3 installed, `dvs_nmost` and `dvs_max` are available at runtime via the cogent3 function `get_app()`. The apps mirror the settings from their command-line implementation but differ in that they operate directly on a sequence collection, skipping conversion to disk storage and directly returning the selected subset of sequences. This is demonstrated in the `plugin_demo.ipynb` notebook.
+We provide `dvs_nmost`, `dvs_max` and `dvs_ctree` as cogent3 apps. For users with cogent3 installed, these are available at runtime via the cogent3 function `get_app()`. The apps mirror the settings from their command-line implementation but differ in that they operate directly on a sequence collection, skipping conversion to disk storage. The `dvs_nmost` and `dvs_max` directly return the selected subset of sequences,  `dvs_ctree` returns the estimated phylogenetic tree. These are demonstrated in the `plugin_demo.ipynb` notebook.
 
 # Performance
 
@@ -127,17 +122,19 @@ As shown in \autoref{fig:compute-time}, the compute time was linear with respect
 
 ## Constructing trees from $k$-mers
 
-We use the mammals dataset to evaluate the statistical performance of the method. All sequences were concatenated and phylogenetic trees were estimated from this alignment with different $k$-mer sizes and sketch sizes. The trees generated by `dvs ctree` are compared to the maximum likelihood tree found by IQ-TREE [@minh.2020.iq] using a general time-reversible model [@tavare.1986.some] on the concatenated alignment.
+We use the mammals dataset to evaluate the statistical performance of the `ctree` method. All sequences were concatenated and a phylogenetic tree was estimated from this alignment with different $k$-mer sizes and sketch sizes. The trees generated by `dvs ctree` are compared to the maximum likelihood tree found by IQ-TREE [@minh.2020.iq] using a general time-reversible model [@tavare.1986.some] on the concatenated alignment.
 
-\autoref{fig:ctree-k} shows how the likelihood of the generated trees changes as $k$ increases for varying sketch sizes. When $k \leq 5$, the $k$-mers are non-unique (all mash-distances are zero) and the method generates a caterpillar tree. For larger $k$-mer sizes the trees are more interesting, though it is not until $k=8$ when the caterpillar tree is statistically outperformed. As $k$ increases further, the likelihood approaches that of IQ-TREE but plateaus before it at $k=12$. \autoref{fig:ctree-ss} shows how the likelihood of the generated trees changes as the sketch size increases for varying $k \geq 8$. The likelihood trends upwards as the sketch size increases (that is the mash distance estimate improves), approaching but not reaching the optimal maximum likelihood found by IQ-TREE. For optimal values of $k$, the performance of the method plateaus beyond a sketch size of about 2,500. The optimal maximum likelihood achieved by `dvs ctree` is impressive considering that the method does not require an alignment.
+The likelihood of the generated trees changes with $k$ (\autoref{fig:ctree-k}). When $k \leq 5$, the $k$-mers are non-unique (all mash-distances are zero) and the method generates a caterpillar tree. It is not until $k=8$ when the caterpillar tree is statistically outperformed. As $k$ increases further, the likelihood approaches that of IQ-TREE but plateaus before it at $k=12$. \autoref{fig:ctree-ss} shows how the likelihood of the generated trees changes as the sketch size increases for varying $k \geq 8$. 
+
+Sketch size also impacts on the tree likelihood. An upward trend with increasing sketch size was evident with the likelihood approaching but not reaching that found by IQ-TREE on the aligned data. For the best performing values of $k$, there was no benefit to increasing sketch size beyond ~2,500.
 
 ### Computational performance
 
-While the time complexity of the standard algorithm for agglomerative clustering is $\mathcal{O}\left(n^3\right)$, with respect to the number of sequences, the number of sequeunces is often small in comparison to the sequence lengths. As such, it was found that the most time consuming step of the algorithm was within the distance calculation. The pairwise distance calculation is done in two steps. First, is the construction of what is called the MinHash sketch for each sequence (essentially a random subset of $k$-mers of size *sketch size*), followed by the computation of distances from these sketches [@ondov.2016.mash]. The expected runtime for constructing the MinHash sketch for a sequence is $\mathcal{O}\left(l + s\log s \log l\right)$ where $l$ is the length of the sequence, and $s$ is the *sketch size*. This is essentially linear with respect to $l$ when $l$ is much larger than $s$. Hence, the time complexity for constructing all MinHash sketches is linear with respect to the combined length of all sequences. The time complexity for calculating the distance between two sequences from the MinHash sketch is $\mathcal{O}\left(s\right)$. Hence, the time complexity for calculating the pairwise distance matrix between all pairs of sequences from the sketches is $\mathcal{O}\left(sn^2\right)$. For suitable applications of this algorithm however, both the *sketch size* and the number of sequences are numerically dominated by the combined length of the sequences. Thus, the expected time to run the algorithm is linear with respect to the combined length of the sequences. This has been verified empirically with the 960 REFSOIL dataset (\autoref{fig:ctree-time}). The figure shows that as the number of sequences grows (and hence the combined length of the sequences with it), the time taken to construct the cluster tree grows linearly.
+While the time complexity of the standard algorithm for agglomerative clustering is $\mathcal{O}(n^3)$, with respect to the number of sequences, the number of sequences is often small in comparison to the sequence lengths. As such, it was found that the most time consuming step of the algorithm was within the distance calculation. The pairwise distance calculation is done in two steps. First, is the constructing the MinHash sketch for each sequence (a subset of sketch size $k$-mers), followed by the computation of distances from these sketches [@ondov.2016.mash]. The expected runtime for constructing the MinHash sketch for a sequence is $\mathcal{O}(l + s\log s \log l)$ where $l$ is the length of the sequence, and $s$ is the sketch size. This is linear with respect to $l$ when $l > > s$. Hence, the time complexity for constructing all MinHash sketches is linear with respect to the combined length of all sequences. The time complexity for calculating the distance between two sequences from the MinHash sketch is $\mathcal{O}(s)$. Hence, the time complexity for calculating the pairwise distance matrix between all pairs of sequences from the sketches is $\mathcal{O} (sn^2)$. For suitable applications of this algorithm however, both the sketch size and the number of sequences are numerically dominated by the combined length of the sequences. Thus, the expected time to run the algorithm is linear with respect to the combined length of the sequences. This has been verified empirically with the 960 REFSOIL dataset (\autoref{fig:ctree-time}). The figure shows that as the number of sequences grows (and hence the combined length of the sequences), the time taken to construct the cluster tree grows linearly.
 
 # Recommendations
 
-For large-scale analyses, we recommend use of the `nmost` command line tool. The choice of $k$ should be guided by the maximum number of unique $k$-mers in a DNA sequence of length $L$, indicated as the result of the expression $log(L/4)$. For instance, $k\approx 12$ for bacterial genomes (which are of the order $10^6$bp). For individual protein coding genes, as \autoref{fig:jsd-v-dist} indicates, $k=6$ for `nmost` gives a reasonable accuracy. 
+For selecting representing sequences for large-scale analyses, we recommend use of the `nmost` command line tool. The choice of $k$ should be guided by the maximum number of unique $k$-mers in a DNA sequence of length $L$, indicated as the result of the expression $log(L/4)$. For instance, $k\approx 12$ for bacterial genomes (which are of the order $10^6$bp). For individual protein coding genes, as \autoref{fig:jsd-v-dist} indicates, $k=6$ for `nmost` gives a reasonable accuracy. For estimating a phylogeny,. we recommend $k=12$ and a sketch size of $3000$.
 
 # TODO's
 
@@ -158,9 +155,9 @@ For large-scale analyses, we recommend use of the `nmost` command line tool. The
 
 ![`dvs max` exhibits linear time performance with respect to the number of microbial genome sequences. Three replicates were performed for each condition. For each repeat, sequences were randomly sampled without replacement from the 960 REFSOIL microbial dataset [@choi.2017.ismej].](figs/compute_time.pdf){#fig:compute-time}
 
-![Statistical performance of the `dvs_ctree` app on the concatenated mammals alignment as the $k$-mer size increases. The likelihood of trees generated by the app is compared to the maximum likelihood tree found by IQ-TREE [@minh.2020.iq]. For large enough sketch sizes, the likelihood approaches that of IQ-TREE and plateaus beyond a $k$-mer size of ~12.](figs/likelihood_vs_k_for_ss.pdf){#fig:ctree-k}
+![Statistical performance of the `dvs_ctree` app on the concatenated mammals alignment as the $k$-mer size increases. The likelihood of trees, represented as the log-likelihood (lnL),  generated by the app is compared to the maximum likelihood tree found by IQ-TREE [@minh.2020.iq]. For large enough sketch sizes, the likelihood approaches that of IQ-TREE and plateaus beyond a $k$-mer size of ~12.](figs/likelihood_vs_k_for_ss.pdf){#fig:ctree-k}
 
-![Statistical performance of the `dvs_ctree` app on the concatenated mammals alignment as the sketch size increases. The likelihood of trees generated by the app is compared to the maximum likelihood tree found by IQ-TREE2 [@minh.2020.iq]. For optimal $k$-mer sizes, the likelihood approaches that of IQ-TREE and plateaus beyond a sketch size of ~2500.](figs/likelihood_vs_ss_for_k.pdf){#fig:ctree-ss}
+![Statistical performance of the `dvs_ctree` app on the concatenated mammals alignment as the sketch size increases. The likelihood of trees, represented as the log-likelihood (lnL),  generated by the app is compared to the maximum likelihood tree found by IQ-TREE2 [@minh.2020.iq]. For optimal $k$-mer sizes, the likelihood approaches that of IQ-TREE and plateaus beyond a sketch size of ~2500.](figs/likelihood_vs_ss_for_k.pdf){#fig:ctree-ss}
 
 ![Computational performance of the `dvs_ctree` app on 960 REFSOIL microbial dataset. The time taken to run the algorithm grows linearly with respect to the number of sequences.](figs/ctree_times/ss_2500/time_vs_numseqs.png.pdf){#fig:ctree-time}
 
