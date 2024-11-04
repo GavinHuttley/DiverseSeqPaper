@@ -73,13 +73,7 @@ def run(seqdir, suffix, outpath, command):
     reps = [1, 2, 3]
     kmer_sizes = list(range(6, 19, 2))
     sketch_sizes = [
-        500,
-        750,
-        1000,
         2500,
-        5000,
-        7500,
-        10000,
     ]
 
     num_seqs = [25, 50, 75, 100, 125, 150, 175, 200]
