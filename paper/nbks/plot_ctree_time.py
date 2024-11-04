@@ -175,9 +175,9 @@ def generate_plots():
     data = load_and_prepare_data("ctree_time.tsv")
     base_output_dir = FIG_DIR / "ctree_times"
     base_output_dir.mkdir(exist_ok=True)
-    plot_for_k(data, base_output_dir)
+    # plot_for_k(data, base_output_dir)
     plot_for_ss(data, base_output_dir)
-    plot_for_numseqs(data, base_output_dir)
+    # plot_for_numseqs(data, base_output_dir)
 
 
 if __name__ == "__main__":
