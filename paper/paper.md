@@ -39,7 +39,7 @@ The development of bioinformatic workflows benefits from prototyping on smaller 
 
 As the size of DNA sequence datasets continues to grow, a tool that efficiently solves this problem, both statistically and computationally, is needed. `diverse-seq` implements alignment-free algorithms for identifying representatives of the diversity in a sequence collection and for clustering all the sequences.
 
-For the first use case, we show that an entropy measure of $k$-mer frequencies allows `diverse-seq` to identify sequences that correspond well to conventional genetic distance based sampling. The computational performance for this case is linear with respect to the number of sequences and can be run in parallel. Applied to a collection of 10.5k whole microbial genomes on a laptop, `diverse-seq` took ~8 minutes to prepare the data and 4 minutes to select 100 representatives. For the second use case, **ROBERT fill in**.
+For the first use case, we show that an entropy measure of $k$-mer frequencies allows `diverse-seq` to identify sequences that correspond well to conventional genetic distance based sampling. The computational performance for this case is linear with respect to the number of sequences and can be run in parallel. Applied to a collection of 10.5k whole microbial genomes on a laptop, `diverse-seq` took ~8 minutes to prepare the data and 4 minutes to select 100 representatives. For the second use case, on ~1k whole microbial genomes with 8 cores, it takes ~201 seconds to create a tree.
 
 `diverse-seq` is a BSD-3 licensed Python package that provides both a command-line interface and cogent3 plugins. The latter simplifies integration by users into their own analyses. It is available via the Python Package Index and GitHub.
 
