@@ -35,55 +35,54 @@ header-includes:
 summary for non specialists
 --->
 
-The development of bioinformatic workflows benefits from prototyping on smaller problem sizes or using techniques to approximate starting values. For instance, selecting a subset of homologous sequences can be used to identify suitable parameters for multiple sequence alignment of tens of thousands of sequences. Machine learning projects that involve non-homologous sequences can benefit from representative sampling as it mitigates biases from imbalanced groups.
+The development of bioinformatic workflows benefits greatly from prototyping on smaller problem sizes. This benefit hinges on the subset accurately capturing the diversity of the larger collection. For instance, a representative subset can be used to identify suitable initial parameters for multiple sequence alignment of tens of thousands of homologous sequences. For machine learning projects that involve non-homologous sequences, representative sampling can mitigate biases from imbalanced groups. As the size of DNA sequence datasets continues to grow, a tool that efficiently achieves this, both statistically and computationally, is needed.
 
-As the size of DNA sequence datasets continues to grow, a tool that efficiently solves this problem, both statistically and computationally, is needed. `diverse-seq` implements alignment-free algorithms for identifying representatives of the diversity in a sequence collection and for clustering all the sequences.
-
-For the first use case, we show that an entropy measure of $k$-mer frequencies allows `diverse-seq` to identify sequences that correspond well to conventional genetic distance based sampling. The computational performance for this case is linear with respect to the number of sequences and can be run in parallel. Applied to a collection of 10.5k whole microbial genomes on a laptop, `diverse-seq` took ~8 minutes to prepare the data and 4 minutes to select 100 representatives. For the second use case, on ~1k whole microbial genomes with 8 cores, it takes ~242 seconds to create a tree.
+`diverse-seq` implements alignment-free algorithms for two related use cases, identifying sequences that are representative of the diversity in a collection, and clustering all the sequences in a collection. For the first use case, we show that identifying representative sequences with an entropy measure of $k$-mer frequencies corresponds well to sampling via conventional genetic distances. The computational performance is linear with respect to the number of sequences and can be run in parallel. Applied to a collection of 10.5k whole microbial genomes on a laptop, `diverse-seq` took ~8 minutes to prepare the data and 4 minutes to select 100 representatives. For the second use case, for ~1k whole microbial genomes on a laptop with 8 cores, it takes ~242 seconds to create a tree.
 
 `diverse-seq` is a BSD-3 licensed Python package that provides both a command-line interface and cogent3 plugins. The latter simplifies integration by users into their own analyses. It is available via the Python Package Index and GitHub.
 
 # Statement of need
 
-Bioinformatics data sampling workflows benefit from selecting a subset of sequences that represent the full diversity present in large sequence collections [e.g. @parks.2018.natbiotechnol; @zhu.2019.nat.commun]. It is also the case that the compute time of algorithms such as phylogenetic estimation greatly benefit from having a good initial estimate. Thus, the motivation for alignment-free methods is both computational performance and statistical accuracy.
+Accurately selecting a representative subset of biological sequences can improve the statistical accuracy and computational performance of bioinformatics data sampling workflows.
+In many cases, the reliability of such analyses is contingent on the sample capturing the full diversity of the original collection [e.g. estimating large phylogenies @parks.2018.natbiotechnol; @zhu.2019.nat.commun and **doing something else (cite)?**]. 
+Additionally, the computation time of likelihood-based algorithms, such as phylogenetic estimation, greatly benefits from having a good initial estimate, which can be achieved quickly with a smaller sample.
 
-Existing tools require input data in formats that themselves can be computationally costly to acquire. For instance, tree-based sampling procedures can be efficient, but they rely on a phylogenetic tree or a pairwise distance matrix, both of which require sequence alignment [e.g. @widmann.2006.molcellproteomics; @balaban.2019.plosone]. Thus, while tree traversal algorithms are efficient, the estimation of the tree added with the time for sequence alignment and tree estimation presents a barrier to their use.
+Existing tools require input data in formats that themselves can be computationally costly to acquire. For instance, tree-based sampling procedures can be efficient, but they rely on a phylogenetic tree or a pairwise distance matrix, both of which require sequence alignment [e.g. @widmann.2006.molcellproteomics; @balaban.2019.plosone]. Thus, while tree traversal algorithms are efficient, the estimation of the tree added with the time for sequence alignment and tree estimation presents a barrier to their use. Furthermore, such approaches require the sequences to be homologous.
 
-The `diverse-seq` sequence selection algorithms are linear in time for the number of sequences and more flexible than published approaches. The clustering algorithm is linear in time for the combined sequence length. While the algorithms do not require sequences to be homologous, when applied to homologous sequences, the set selected by `diverse-seq` is comparable to what would be expected based on genetic distance.
+The `diverse-seq` sequence selection algorithms are linear in time for the number of sequences and more flexible than published approaches. The `diverse-seq` clustering algorithm is linear in time for the combined sequence length. While the algorithms do not require sequences to be homologous, when applied to homologous sequences, the set selected is comparable to what would be expected based on genetic distance.
 
 # Definitions
 
-A $k$-mer is a subsequence of length $k$ and a $k$-mer probability vector has elements corresponding to the frequency of each $k$-mer in a sequence. The Shannon entropy of a probability vector is calculated as $H=-\sum_i p_i \log_2 p_i$ where $p_i$ is the probability of the $i$-th $k$-mer. As an indication of the interpretability of Shannon entropy, a DNA sequence with equifrequent nucleotides has the maximum possible $H=2$ while a sequence with a single nucleotide has $H=0$. Thus, $H$ represents a measure of "uncertainty" in the vector and is commonly used in sequence analysis [e.g. @schneider.1990.nucleicacidsres].
 
-Shannon entropy is integral to other statistical measures that quantify uncertainty [@lin.1991.ieeetrans.inf.theory], including Jensen-Shannon divergence (JSD), which we employ in this work. As illustrated in Table 1, the magnitude of JSD reflects the level of relatedness amongst sequences via the similarity between their $k$-mer probability vectors.
+The Shannon entropy is a measure of "uncertainty" in a probability vector and is commonly used in sequence analysis [e.g. @schneider.1990.nucleicacidsres]. A $k$-mer is a subsequence of length $k$, and the frequency of each $k$-mer in a sequence forms a $k$-mer probability vector. The Shannon entropy of a probability vector is calculated as $H=-\sum_i p_i \log_2 p_i$ where $p_i$ is the probability of the $i$-th $k$-mer. As an indication of the interpretability of Shannon entropy, a DNA sequence with equifrequent nucleotides has the maximum possible $H=2$ (high uncertainty) while a sequence with a single nucleotide has $H=0$ (no uncertainty). 
 
-For a collection of DNA sequences $\mathbb{S}$ with size $N$, define $f_i$ as the $k$-mer frequency vector for sequence $s_i, s_i \in \mathbb{S}$. The JSD for the resulting set of vectors, $\mathbb{F}$, is
+Shannon entropy is integral to other statistical measures that quantify uncertainty [@lin.1991.ieeetrans.inf.theory], including Jensen-Shannon divergence (JSD), which we employ in this work. As illustrated in Table 1, the magnitude of JSD reflects the level of relatedness amongst sequences via the similarity between their $k$-mer probability vectors. For DNA sequences,  $s_i$, of a collection $\mathbb{S}$ with size $N$, define $f_i$ as the $k$-mer frequency vector for sequence $s_i$. The JSD for the resulting set of vectors, $\mathbb{F}$, is
 
 \begin{equation*}
-JSD(\mathbb{F})=H \left( \frac{1}{N}\sum_i^N f_i \right) - \overline{H(\mathbb{F})}
+JSD(\mathbb{F})=H \left( \frac{1}{N}\sum_i^N f_i \right) - \overline{H(\mathbb{F})},
 \end{equation*}
 
 where the first term corresponds to the Shannon entropy of the mean of the $N$ probability vectors and the second term $\overline{H(\mathbb{F})}$ is the mean of their corresponding Shannon entropies. For vector $f_i \in \mathbb{F}$ its contribution to the total JSD of $\mathbb{F}$ is
 
 \begin{equation}
-\delta_{JSD}(i)=JSD(\mathbb{F})-JSD(\mathbb{F} - \{f_i\})
+\delta_{JSD}(i)=JSD(\mathbb{F})-JSD(\mathbb{F} - \{f_i\}).
 \end{equation}\label{eqn:delta-jsd}
 
 From the equation, it is apparent that to update the JSD of a collection efficiently, we need only track $k$-mer counts, total Shannon entropy and the number of sequences in the collection. Thus, the algorithm can be implemented with a single pass through the data.
 
-To facilitate the description below, we define the record with the minimum $\delta_{JSD}$ as $$lowest = \argmin_{i \in N} \delta_{JSD}(i)$$
+To facilitate the description below, we define the record with the minimum $\delta_{JSD}$ as $$lowest = \argmin_{i \in N} \delta_{JSD}(i).$$
 
 # Algorithms
 
 *`dvs` subcommand: `prep` converts sequences into `numpy` arrays for faster processing.*
 
-The `prep` sub-command converts plain text sequence data into an on-disk storage format that is more efficient for access in the other steps. A user can provide either fasta or GenBank formatted DNA sequence files. The sequences are converted into unsigned 8-bit integer `numpy` arrays and stored in a single HDF5 file on disk. The resulting `.dvseqs` file is required for all the sub-commands.
+The `prep` sub-command converts plain text sequence data into an  on-disk storage format for efficient access in the other steps. A user can provide either fasta or GenBank formatted DNA sequence files. The sequences are converted into unsigned 8-bit integer `numpy` arrays and stored in a single HDF5 file on disk. The resulting `.dvseqs` file is required for all the sub-commands.
 
 ## Selection of representative sequences 
 
 *`dvs` subcommands: `nmost` samples the $n$ sequences that increase JSD most; `max` samples sequences that maximise a user specified statistic, either the standard deviation or the coefficient of variation of $\delta_{JSD}$.*
 
-The algorithm for computing the Jensen-Shannon divergence is quite simple. What follows are the optimisations we have employed to make the calculations scalable in terms of the number of sequences.
+The following optimisations have been employed to make the algorithm for computing the JSD scalable in terms of the number of sequences.
 
 1. Sequence data is BLOSC2 compressed as unsigned-8 bit integers and saved in HDF5 format on disk.
 2. `numba`, a just-in-time compiler, is used for the core algorithms producing $k$-mers and their counts, providing a significant speed up over a pure python implementation [@numba].
@@ -102,7 +101,9 @@ The mash distance [@ondov.2016.mash] estimates the proportion of changes between
 We provide `dvs_nmost`, `dvs_max` and `dvs_ctree` as cogent3 apps. For users with cogent3 installed, these are available at runtime via the cogent3 function `get_app()`. The apps mirror the settings from their command-line implementation but differ in that they operate directly on a sequence collection, skipping conversion to disk storage. The `dvs_nmost` and `dvs_max` directly return the selected subset of sequences,  `dvs_ctree` returns the estimated phylogenetic tree. These are demonstrated in the `plugin_demo.ipynb` notebook.
 
 # Performance
-
+<!--
+todo: change subheading structure to not have 3 subsequent heading with no content
+--->
 ## Selection of representative sequences
 ### Recovery of representatives from synthetic knowns
 
