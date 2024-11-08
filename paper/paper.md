@@ -49,13 +49,13 @@ Accurately selecting a representative subset of biological sequences can improve
 
 Existing tools to the data sampling problem require input data in formats that themselves can be computationally costly to acquire. For instance, tree-based sequence selection procedures can be efficient, but they rely on a phylogenetic tree or a pairwise genetic distance matrix, both of which require alignment of homologous sequences [e.g. @widmann.2006.molcellproteomics; @balaban.2019.plosone]. Adding both the time for sequence alignment and tree estimation presents a barrier to their use.
 
-The `diverse-seq` sequence selection algorithms are linear in time for the number of sequences and more flexible than published approaches. While the algorithms do not require sequences to be homologous, when applied to homologous sequences, the set selected is comparable to what would be expected based on genetic distance.  The `diverse-seq` clustering algorithm is linear in time for the combined sequence length. For homologous sequences, the estimated trees are approximations to that estimated from an alignment by IQ-TREE [@minh.2020.iq].
+The `diverse-seq` sequence selection algorithms are linear in time for the number of sequences and more flexible than published approaches. While the algorithms do not require sequences to be homologous, when applied to homologous sequences, the set selected is comparable to what would be expected based on genetic distance.  The `diverse-seq` clustering algorithm is linear in time for the combined sequence length. For homologous sequences, the estimated trees are approximations to that estimated from an alignment by IQ-TREE2 [@minh.2020.iq].
 
 # Definitions
 
 A $k$-mer is a subsequence of length $k$, and the frequency of each $k$-mer in a sequence forms a $k$-mer probability vector. The Shannon entropy is a measure of "uncertainty" in a probability vector and is commonly used in sequence analysis [e.g. @schneider.1990.nucleicacidsres]. The Shannon entropy is calculated as $H=-\sum_i p_i \log_2 p_i$ where $p_i$ is the probability of the $i$-th $k$-mer. As an indication of the interpretability of Shannon entropy, a DNA sequence with equifrequent nucleotides has the maximum possible $H=2$ (high uncertainty) while a sequence with a single nucleotide has $H=0$ (no uncertainty). 
 
-Shannon entropy is integral to other statistical measures that quantify uncertainty [@lin.1991.ieeetrans.inf.theory], including Jensen-Shannon divergence (JSD), which we employ in this work. As illustrated in Table 1, the magnitude of JSD reflects the level of relatedness amongst sequences via the similarity between their $k$-mer probability vectors. For a collection of DNA sequences $\mathbb{S}$ with size $N$, define $f_i$ as the $k$-mer frequency vector for sequence $s_i$. The JSD for the resulting set of vectors, $\mathbb{F}$, is
+Shannon entropy is integral to other statistical measures that quantify uncertainty [@lin.1991.ieeetrans.inf.theory], including Jensen-Shannon divergence (JSD), which we employ in this work. As illustrated in Table 1, the magnitude of JSD reflects the level of relatedness amongst sequences via the similarity between their $k$-mer probability vectors. For a collection of  $N$ DNA sequences $\mathbb{S}$, define $f_i$ as the $k$-mer frequency vector for sequence $s_i$. The JSD for the resulting set of vectors, $\mathbb{F}$, is
 
 \begin{equation*}
 JSD(\mathbb{F})=H \left( \frac{1}{N}\sum_i^N f_i \right) - \overline{H(\mathbb{F})},
@@ -63,11 +63,11 @@ JSD(\mathbb{F})=H \left( \frac{1}{N}\sum_i^N f_i \right) - \overline{H(\mathbb{F
 
 where the first term corresponds to the Shannon entropy of the mean of the $N$ probability vectors and the second term $\overline{H(\mathbb{F})}$ is the mean of their corresponding Shannon entropies. For vector $f_i \in \mathbb{F}$ its contribution to the total JSD of $\mathbb{F}$ is
 
-\begin{equation}
+\begin{equation*}
 \delta_{JSD}(i)=JSD(\mathbb{F})-JSD(\mathbb{F} - \{f_i\}).
-\end{equation}\label{eqn:delta-jsd}
+\end{equation*}\label{eqn:delta-jsd}
 
-From the equation, it is apparent that to update the JSD of a collection efficiently, we need only track $k$-mer counts, total Shannon entropy and the number of sequences in the collection. Thus, the algorithm can be implemented with a single pass through the data.
+From the equation, it is apparent that to update the JSD of a collection efficiently, we need only track $k$-mer counts, total Shannon entropy and the number of sequences. Thus, the algorithm can be implemented with a single pass through the data.
 
 To facilitate the description below, we define the record with the minimum $\delta_{JSD}$ as $$lowest = \argmin_{i \in N} \delta_{JSD}(i).$$
 
@@ -120,11 +120,11 @@ As shown in \autoref{fig:compute-time}, the compute time was linear with respect
 
 ## Constructing trees from $k$-mers
 
-We use the mammals dataset to evaluate the statistical performance of the `ctree` method. All sequences were concatenated and a phylogenetic tree was estimated from this alignment with different $k$-mer sizes and sketch sizes. The trees generated by `dvs ctree` are compared to the maximum likelihood tree found by IQ-TREE [@minh.2020.iq] using a general time-reversible model [@tavare.1986.some] on the concatenated alignment.
+We use the mammals dataset to evaluate the statistical performance of the `ctree` method. All sequences were concatenated and a phylogenetic tree was estimated from this alignment with different $k$-mer sizes and sketch sizes. The trees generated by `dvs ctree` are compared to the maximum likelihood tree found by IQ-TREE2 [@minh.2020.iq] using a general time-reversible model [@tavare.1986.some] on the concatenated alignment.
 
-The likelihood of the generated trees changes with $k$ (\autoref{fig:ctree-k}). When $k \leq 5$, the $k$-mers are non-unique (all mash-distances are zero) and the method generates a caterpillar tree. It is not until $k=8$ when the caterpillar tree is statistically outperformed. As $k$ increases further, the likelihood approaches that of IQ-TREE but plateaus before it at $k=12$. \autoref{fig:ctree-ss} shows how the likelihood of the generated trees changes as the sketch size increases for varying $k \geq 8$. 
+The likelihood of the generated trees changes with $k$ (\autoref{fig:ctree-k}). When $k \leq 5$, the $k$-mers are non-unique (all mash-distances are zero) and the method generates a caterpillar tree. It is not until $k=8$ when the caterpillar tree is statistically outperformed. As $k$ increases further, the likelihood approaches that of IQ-TREE2 but plateaus before it at $k=12$. \autoref{fig:ctree-ss} shows how the likelihood of the generated trees changes as the sketch size increases for varying $k \geq 8$. 
 
-Sketch size also impacts on the tree likelihood. An upward trend with increasing sketch size was evident with the likelihood approaching but not reaching that found by IQ-TREE on the aligned data. For the best performing values of $k$, there was no benefit to increasing sketch size beyond ~2,500.
+Sketch size also impacts on the tree likelihood. An upward trend with increasing sketch size was evident with the likelihood approaching but not reaching that found by IQ-TREE2 on the aligned data. For the best performing values of $k$, there was no benefit to increasing sketch size beyond ~2,500.
 
 ### Computational performance
 
@@ -145,7 +145,7 @@ For selecting representing sequences for large-scale analyses, we recommend use 
 ![The `diverse-seq max` algorithm. This includes upper and lower bounds for the size of the divergent set and amends the within-loop condition of `nmost`. The set size is increased when a record that increases JSD also increases the standard deviation of $\delta_{JSD}$.](figs/max.pdf){#algo:max}
 
 
-![Identification of representatives of known groups is affected by sequence length. `dvs max` identified representatives of known groups in both *balanced*, and *imbalanced* pools. (TODO: check correctness of simulation labels, why is 1k seqs more variable for balanced stdev?)](figs/synthetic_known_bar.pdf){#fig:synthetic-knowns}
+![Identification of representatives of known groups is affected by sequence length. `dvs max` identified representatives of known groups in both *balanced*, and *imbalanced* pools.](figs/synthetic_known_bar.pdf){#fig:synthetic-knowns}
 
 ![The statistical performance of `dvs max` in recovering representative sequences is a function of $k$ and the chosen statistic. The minimum and maximum allowed set sizes were 5 and 30, respectively. `dvs nmost` is represented by $JSD(\mathbb{F})$ run with n=5. Trendlines were estimated using LOWESS [@cleveland.1979.j.am.stat.assoc]. (a) *Significant %* is the percentage of cases where `dvs max` was significantly better ($p-\text{value} \le 0.05$) at selecting divergent sequences than a random selection process. (b) The mean and standard deviations of the number of sequences selected by `dvs max`.](figs/jsd_v_dist.pdf){#fig:jsd-v-dist}
 
@@ -153,9 +153,9 @@ For selecting representing sequences for large-scale analyses, we recommend use 
 
 ![`dvs max` exhibits linear time performance with respect to the number of microbial genome sequences. Three replicates were performed for each condition. For each repeat, sequences were randomly sampled without replacement from the 960 REFSOIL microbial dataset [@choi.2017.ismej].](figs/compute_time.pdf){#fig:compute-time}
 
-![Statistical performance of the `dvs_ctree` app on the concatenated mammals alignment as the $k$-mer size increases. The likelihood of trees, represented as the log-likelihood (lnL),  generated by the app is compared to the maximum likelihood tree found by IQ-TREE [@minh.2020.iq]. For large enough sketch sizes, the likelihood approaches that of IQ-TREE and plateaus beyond a $k$-mer size of ~12.](figs/likelihood_vs_k_for_ss.pdf){#fig:ctree-k}
+![Statistical performance of the `dvs_ctree` app on the concatenated mammals alignment as the $k$-mer size increases. The likelihood of trees, represented as the log-likelihood (lnL),  generated by the app is compared to the maximum likelihood tree found by IQ-TREE2 [@minh.2020.iq]. For large enough sketch sizes, the likelihood approaches that of IQ-TREE2 and plateaus beyond a $k$-mer size of ~12.](figs/likelihood_vs_k_for_ss.pdf){#fig:ctree-k}
 
-![Statistical performance of the `dvs_ctree` app on the concatenated mammals alignment as the sketch size increases. The likelihood of trees, represented as the log-likelihood (lnL),  generated by the app is compared to the maximum likelihood tree found by IQ-TREE2 [@minh.2020.iq]. For optimal $k$-mer sizes, the likelihood approaches that of IQ-TREE and plateaus beyond a sketch size of ~2500.](figs/likelihood_vs_ss_for_k.pdf){#fig:ctree-ss}
+![Statistical performance of the `dvs_ctree` app on the concatenated mammals alignment as the sketch size increases. The likelihood of trees, represented as the log-likelihood (lnL),  generated by the app is compared to the maximum likelihood tree found by IQ-TREE2 [@minh.2020.iq]. For optimal $k$-mer sizes, the likelihood approaches that of IQ-TREE2 and plateaus beyond a sketch size of ~2500.](figs/likelihood_vs_ss_for_k.pdf){#fig:ctree-ss}
 
 ![Computational performance of the `dvs_ctree` app on 960 REFSOIL microbial dataset using 8 cores. The wall time taken to run the algorithm grows linearly with respect to the number of sequences.](figs/compute_time-ctree.pdf){#fig:ctree-time}
 
