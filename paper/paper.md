@@ -176,6 +176,6 @@ For selecting representing sequences for large-scale analyses, we recommend use 
 
 # Acknowledgements
 
-blah blah
+We thank Yapeng Lang for comments on the manuscript.
 
 # References
