@@ -10,5 +10,3 @@ $ docker run --rm \
     openjournals/inara \
     && open paper/paper.pdf
 ```
-> **Note**
-> I need to upload the large test data set to Zenodo, but the mammal data set used for testing is included

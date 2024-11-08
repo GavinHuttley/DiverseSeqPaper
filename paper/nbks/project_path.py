@@ -4,13 +4,15 @@ from plotly.io import write_image
 
 PAPER_DIR = pathlib.Path(__file__).parent.parent
 
+DATA_DIR = PAPER_DIR / "data"
+RESULT_DIR = PAPER_DIR / "results"
+
 FIG_DIR = PAPER_DIR / "figs"
 TABLE_DIR = PAPER_DIR / "tables"
-
 FIG_DIR.mkdir(exist_ok=True)
 
 class pdf_writer:
-    """class that handles super annooying mathjax warning box in plotly pdf's"""
+    """class that handles super annoying mathjax warning box in plotly pdf's"""
 
     def __init__(self) -> None:
         self._done_once = False
