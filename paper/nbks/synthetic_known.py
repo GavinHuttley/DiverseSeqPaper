@@ -6,7 +6,7 @@ from cogent3.app.composable import NotCompleted, define_app
 from numpy import array
 from numpy.random import choice, shuffle
 from rich.progress import track
-
+import project_path
 from diverse_seq import util as dvs_utils
 from diverse_seq.record import KmerSeq, SeqArray, seqarray_to_kmerseq
 from diverse_seq.records import max_divergent
@@ -165,7 +165,7 @@ def main():
     table.columns["correct%"] = (
         100 * table.columns["mean(correct)"] / config["num_reps"]
     )
-    table.write("synthetic_known_summary.tsv")
+    table.write(project_path.RESULT_DIR / "synthetic_known_summary.tsv")
     print(table)
 
 

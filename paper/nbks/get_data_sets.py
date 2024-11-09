@@ -8,10 +8,12 @@ import zipfile
 DATA_DIR = pathlib.Path(__file__).parent.parent / "data"
 
 if not DATA_DIR.exists():
-    print(f"cannot find the data directory {DATA_DIR}, this file belongs in the `/nbks` directory")
+    print(
+        f"cannot find the data directory {DATA_DIR}, this file belongs in the `/nbks` directory"
+    )
     sys.exit(1)
 
-_filename = re.compile(r'/([^/]+\.[^/?]+)(?:\?|$)')
+_filename = re.compile(r"/([^/]+\.[^/?]+)(?:\?|$)")
 
 
 def extract_zip(zip_file_path, extract_dir):
@@ -22,19 +24,20 @@ def extract_zip(zip_file_path, extract_dir):
         zip_file_path (str): Path to the ZIP archive file.
         extract_dir (str): Directory to extract the contents to.
     """
-    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+    with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
         zip_ref.extractall(extract_dir)
+
 
 def fetch_data_sets():
     urls = [
-            # "https://zenodo.org/records/14052787/files/refsoil.zip?download=1", # this is large and not critical
-            # "https://zenodo.org/records/14052787/files/wol.zip?download=1", # this is large and not critical
-            "https://zenodo.org/records/14052787/files/mammals-aligned.zip?download=1",
-            # the following two files are large (1GB and 9GB) and can take some time to download!
-            # you can grab them directly from zenodo and place into the data directory
-            "https://zenodo.org/records/14052787/files/soil.dvseqs?download=1",
-            "https://zenodo.org/records/14052787/files/wol.dvseqs?download=1",
-            ]
+        # "https://zenodo.org/records/14052787/files/refsoil.zip?download=1", # this is large and not critical
+        # "https://zenodo.org/records/14052787/files/wol.zip?download=1", # this is large and not critical
+        "https://zenodo.org/records/14052787/files/mammals-aligned.zip?download=1",
+        # the following two files are large (1GB and 9GB) and can take some time to download!
+        # you can grab them directly from zenodo and place into the data directory
+        "https://zenodo.org/records/14052787/files/soil.dvseqs?download=1",
+        "https://zenodo.org/records/14052787/files/wol.dvseqs?download=1",
+    ]
     block_size = 4096
 
     with rich_progress.Progress() as progress:
@@ -55,5 +58,6 @@ def fetch_data_sets():
             progress.update(get_url, advance=1, refresh=True)
             # if name.endswith(".zip"):
             #     extract_zip(dest, DATA_DIR)
+
 
 fetch_data_sets()

@@ -11,6 +11,7 @@ FIG_DIR = PAPER_DIR / "figs"
 TABLE_DIR = PAPER_DIR / "tables"
 FIG_DIR.mkdir(exist_ok=True)
 
+
 class pdf_writer:
     """class that handles super annoying mathjax warning box in plotly pdf's"""
 
@@ -25,5 +26,5 @@ class pdf_writer:
             write_image(fig, path)
             time.sleep(2)
             self._done_once = True
-        
+
         write_image(fig, path)

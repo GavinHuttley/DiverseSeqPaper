@@ -64,14 +64,14 @@ def run_max(seqfile, outpath, k):
         assert r.exit_code == 0, r.output
     return timer.get_elapsed_time()
 
+
 def run_nmost(seqfile, outpath, k):
-    args = (
-        f"-s {seqfile} -o {outpath} --number 5 -k {k} -np 1 -hp".split()
-    )
+    args = f"-s {seqfile} -o {outpath} --number 5 -k {k} -np 1 -hp".split()
     with TimeIt() as timer:
         r = RUNNER.invoke(dvs_cli.nmost, args, catch_exceptions=False)
         assert r.exit_code == 0, r.output
     return timer.get_elapsed_time()
+
 
 @click.command(**_click_command_opts)
 @click.argument("seqdir", type=Path)
