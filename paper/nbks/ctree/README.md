@@ -11,7 +11,3 @@ Uses iqtree to find maximum likelihood tree on mammals alignment.
 ## `likelihoods.py`
 
 Find likelihood of all generated trees from `experiment.py` and `iq_experiment.py`.
-
-## `graph.py`
-
-Generate figures from experiment.
