@@ -33,13 +33,16 @@ def extract_zip(zip_file_path, extract_dir):
 
 def fetch_data_sets():
     urls = [
-        # "https://zenodo.org/records/14052787/files/refsoil.zip?download=1", # this is large and not critical
-        # "https://zenodo.org/records/14052787/files/wol.zip?download=1", # this is large and not critical
+        # the following two are required for checking the dvs prep command
+        # "https://zenodo.org/records/14052787/files/refsoil.zip?download=1",
+        # "https://zenodo.org/records/14052787/files/wol.zip?download=1",
+        # the following is required for the tree-based comparisons
         "https://zenodo.org/records/14052787/files/mammals-aligned.zip?download=1",
-        # the following two files are large (1GB and 9GB) and can take some time to download!
-        # you can grab them directly from zenodo and place into the data directory
-        "https://zenodo.org/records/14052787/files/soil.dvseqs?download=1",
-        "https://zenodo.org/records/14052787/files/wol.dvseqs?download=1",
+        # the following files are required for checking performance against large
+        # data set sizes. They are around(1GB and 9GB) and can take some time to download!
+        # you can grab them directly from zenodo and place into the paper/data directory
+        # "https://zenodo.org/records/14052787/files/soil.dvseqs?download=1",
+        # "https://zenodo.org/records/14052787/files/wol.dvseqs?download=1",
     ]
     block_size = 4096
 
@@ -59,8 +62,8 @@ def fetch_data_sets():
                     out.write(data)
             progress.remove_task(get_content)
             progress.update(get_url, advance=1, refresh=True)
-            # if name.endswith(".zip"):
-            #     extract_zip(dest, DATA_DIR)
+            if name.endswith(".zip"):
+                extract_zip(dest, DATA_DIR)
 
 
 fetch_data_sets()
