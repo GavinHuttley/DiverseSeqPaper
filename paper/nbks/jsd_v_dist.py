@@ -9,8 +9,7 @@ from cogent3.app.composable import define_app
 from numpy import array, isnan
 from numpy.random import choice
 from rich.progress import track
-from scipy.special import binom
-
+from scipy import special
 from diverse_seq import util as dvs_utils
 from diverse_seq.records import dvs_max, dvs_nmost
 
@@ -20,7 +19,7 @@ def get_combinations(all_vals, choose, number):
     obtain sets of names"""
     indices = set()
     interval = range(len(all_vals))
-    max_size = binom(len(all_vals), choose)
+    max_size = special.binom(len(all_vals), choose)
     number = min(number, max_size)
     while len(indices) < number:
         candidate = tuple(sorted(choice(interval, size=choose, replace=False)))
