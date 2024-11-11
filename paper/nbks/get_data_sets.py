@@ -8,10 +8,13 @@ import zipfile
 DATA_DIR = pathlib.Path(__file__).parent.parent / "data"
 
 if not DATA_DIR.exists():
-    print(
-        f"cannot find the data directory {DATA_DIR}, this file belongs in the `/nbks` directory"
-    )
-    sys.exit(1)
+    if DATA_DIR.parent.name != "paper":
+        print(
+            f"cannot find the data directory {DATA_DIR}, this file belongs in the `paper/nbks` directory"
+        )
+        sys.exit(1)
+    else:
+        DATA_DIR.mkdir()
 
 _filename = re.compile(r"/([^/]+\.[^/?]+)(?:\?|$)")
 
